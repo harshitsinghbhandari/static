@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400&family=Outfit:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+            body{font-family:'Cormorant Garamond',Georgia,serif;max-width:720px;margin:48px auto;padding:0 24px;color:#1a1a1a;line-height:1.9;background:#faf8f5;}
+            h1{font-size:2.5em;font-weight:700;margin:0 0 0.5em;letter-spacing:-0.03em;}
+            h2{font-size:1.6em;font-weight:600;margin:2em 0 0.75em;padding-bottom:0.5em;border-bottom:1px solid #e8e4dd;}
+            h3{font-family:'Outfit',sans-serif;font-size:1.1em;font-weight:600;margin:1.75em 0 0.75em;letter-spacing:0.02em;}
+            p{font-size:1.1em;margin:1em 0;text-align:justify;}
+            a{color:#c45c3e;text-decoration:none;border-bottom:1px solid currentColor;}
+            code{font-family:'JetBrains Mono',monospace;font-size:0.85em;background:#f5f2ed;padding:3px 8px;border-radius:3px;color:#9a3d25;border:1px solid #e8e4dd;}
+            pre{background:#1a1a1a;color:#f5f2ed;padding:24px;border-radius:4px;overflow-x:auto;margin:1.5em 0;line-height:1.6;border-top:3px solid #c45c3e;}
+            pre code{background:none;color:inherit;padding:0;border:none;}
+            blockquote{font-style:italic;color:#6b6b6b;border-left:3px solid #c45c3e;padding-left:24px;margin:1.5em 0;}
+            ul,ol{margin:1em 0;padding-left:1.5em;}
+            li{margin:0.5em 0;}
+            table{width:100%;border-collapse:collapse;margin:1.5em 0;font-family:'Outfit',sans-serif;font-size:0.9em;}
+            th{background:#f5f2ed;padding:14px 16px;text-align:left;font-weight:600;border-bottom:2px solid #1a1a1a;}
+            td{padding:14px 16px;border-bottom:1px solid #e8e4dd;}
+            hr{border:none;height:1px;background:#e8e4dd;margin:3em 0;}
+            img{max-width:100%;height:auto;border-radius:4px;margin:1.5em 0;}
+            .mermaid-diagram{margin:1.5em 0;text-align:center;}
+        </style>
+</head>
+<body>
+<h1>Software Viva Guide</h1>
+<p>This file is for quick preparation before the presentation and viva.</p>
+<p>It explains:</p>
+<ul>
+<li>what the software does</li>
+<li>how the code is structured</li>
+<li>how the robot behaves</li>
+<li>what to say when asked technical questions</li>
+</ul>
+<h2>1. One-line explanation</h2>
+<p>This project is a software-controlled robotic sorting system where a web application controls a robotic arm and conveyor, reads sensors, and runs automation/workflow logic to sort objects based on detection and color.</p>
+<h2>2. Main software objective</h2>
+<p>The software has three goals:</p>
+<ol>
+<li>Manual control</li>
+</ol>
+<ul>
+<li>allow the operator to move the robotic arm joints and motor from the browser</li>
+</ul>
+<ol start="2">
+<li>Automation</li>
+</ol>
+<ul>
+<li>react to sensor input like ultrasonic detection</li>
+<li>run predefined workflows automatically</li>
+</ul>
+<ol start="3">
+<li>Demo / sorting logic</li>
+</ol>
+<ul>
+<li>run a hardcoded demo loop:<ul>
+<li>start conveyor</li>
+<li>detect object</li>
+<li>stop conveyor</li>
+<li>identify color</li>
+<li>execute the correct workflow or reject path</li>
+</ul>
+</li>
+</ul>
+<h2>3. High-level architecture</h2>
+<p>There are 4 major software parts:</p>
+<h3>A. Frontend</h3>
+<ul>
+<li>files:<ul>
+<li><a href="./templates/index.html">templates/index.html</a></li>
+<li><a href="./static/script.js">static/script.js</a></li>
+<li><a href="./static/style.css">static/style.css</a></li>
+</ul>
+</li>
+</ul>
+<p>What it does:</p>
+<ul>
+<li>shows the dashboard</li>
+<li>lets the user move sliders</li>
+<li>save positions</li>
+<li>create workflows</li>
+<li>create automations</li>
+<li>start/stop demo mode</li>
+<li>displays live state from the backend</li>
+</ul>
+<p>Important point:</p>
+<ul>
+<li>the frontend is <strong>not</strong> the main control brain</li>
+<li>it is only the operator interface</li>
+</ul>
+<h3>B. Backend</h3>
+<ul>
+<li>file:<ul>
+<li><a href="./app.py">app.py</a></li>
+</ul>
+</li>
+</ul>
+<p>What it does:</p>
+<ul>
+<li>main control brain of the whole system</li>
+<li>talks to both Arduinos over serial</li>
+<li>runs workflows</li>
+<li>runs automations</li>
+<li>runs hardcoded demo mode</li>
+<li>reads ultrasonic input from Arduino 1</li>
+<li>reads color result from camera CV pipeline</li>
+<li>updates LCD status through Arduino 1</li>
+<li>exposes API endpoints to the UI</li>
+</ul>
+<p>Important point:</p>
+<ul>
+<li><code>app.py</code> is the central orchestrator</li>
+</ul>
+<h3>C. Persistent runtime state</h3>
+<ul>
+<li>file:<ul>
+<li><a href="./state_store.py">state_store.py</a></li>
+</ul>
+</li>
+</ul>
+<p>What it does:</p>
+<ul>
+<li>stores live software state in <code>runtime_state.json</code></li>
+<li>persists:<ul>
+<li>last commanded joints</li>
+<li>sensor state</li>
+<li>color state</li>
+<li>workflow execution</li>
+<li>automation state</li>
+<li>demo state</li>
+<li>command history</li>
+</ul>
+</li>
+</ul>
+<p>Why it exists:</p>
+<ul>
+<li>to avoid keeping important runtime state only in browser memory</li>
+<li>to survive page refresh or app restart</li>
+</ul>
+<p>Important point:</p>
+<ul>
+<li>persisted state is used as software state, but not trusted as real physical feedback of arm pose</li>
+</ul>
+<h3>D. Computer vision color detection</h3>
+<ul>
+<li>files:<ul>
+<li><a href="./cv_detector.py">cv_detector.py</a></li>
+<li><a href="./cv.py">cv.py</a></li>
+<li><a href="./camera_test.py">camera_test.py</a></li>
+</ul>
+</li>
+</ul>
+<p>What it does:</p>
+<ul>
+<li>uses webcam frames</li>
+<li>detects color using HSV ranges</li>
+<li>returns dominant color from the ROI</li>
+</ul>
+<p>Important point:</p>
+<ul>
+<li>color detection is now camera-based, not Arduino color-sensor based</li>
+</ul>
+<h2>4. Hardware-software responsibility split</h2>
+<h3>Arduino 1</h3>
+<ul>
+<li>file:<ul>
+<li><a href="./main_1.ino">main_1.ino</a></li>
+</ul>
+</li>
+</ul>
+<p>Responsibilities:</p>
+<ul>
+<li>controls:<ul>
+<li>Base</li>
+<li>Shoulder</li>
+<li>Elbow</li>
+</ul>
+</li>
+<li>reads ultrasonic sensor</li>
+<li>drives I2C LCD</li>
+<li>receives LCD text/status messages from backend</li>
+</ul>
+<h3>Arduino 2</h3>
+<ul>
+<li>file:<ul>
+<li><a href="./main_2.ino">main_2.ino</a></li>
+</ul>
+</li>
+</ul>
+<p>Responsibilities:</p>
+<ul>
+<li>controls:<ul>
+<li>Wrist Pitch</li>
+<li>Wrist Roll</li>
+<li>Gripper</li>
+<li>DC motor</li>
+</ul>
+</li>
+</ul>
+<h3>Key design choice</h3>
+<p>Arduino firmware is kept relatively simple.</p>
+<p>The complex decision-making is in Python backend:</p>
+<ul>
+<li>workflows</li>
+<li>automations</li>
+<li>demo logic</li>
+<li>branch by color</li>
+<li>sensor-driven control</li>
+</ul>
+<p>That is intentional because Python is easier to modify quickly during development.</p>
+<h2>5. How commands flow in the system</h2>
+<h3>Manual control flow</h3>
+<ol>
+<li>User moves slider in UI</li>
+<li>Frontend sends <code>/send_command</code></li>
+<li><code>app.py</code> decides which Arduino should receive the command</li>
+<li>Serial command is sent</li>
+<li>runtime state is updated</li>
+<li>UI reflects updated backend state</li>
+</ol>
+<h3>Workflow flow</h3>
+<ol>
+<li>User saves positions</li>
+<li>User builds workflow from steps</li>
+<li>Workflow is saved to <code>workflows.json</code></li>
+<li>User runs workflow</li>
+<li>Backend executes steps sequentially</li>
+</ol>
+<p>Supported workflow step types:</p>
+<ul>
+<li><code>move</code></li>
+<li><code>wait</code></li>
+<li><code>motor_run</code></li>
+</ul>
+<h3>Automation flow</h3>
+<ol>
+<li>Arduino 1 sends ultrasonic distance</li>
+<li>Backend reads distance</li>
+<li>If rule condition matches:</li>
+</ol>
+<ul>
+<li>backend schedules automation</li>
+</ul>
+<ol start="4">
+<li>After delay:</li>
+</ol>
+<ul>
+<li>motor stop / home / workflow run</li>
+</ul>
+<h3>Demo flow</h3>
+<p>The current hardcoded demo loop is:</p>
+<ol>
+<li>Start conveyor at <code>M:128</code></li>
+<li>Wait until ultrasonic distance is below <code>6 cm</code></li>
+<li>Wait <code>1000 ms</code></li>
+<li>Stop motor</li>
+<li>Check camera-detected color</li>
+<li>Branch:</li>
+</ol>
+<ul>
+<li><code>RED</code> -&gt; run <code>pd-red</code></li>
+<li><code>GREEN</code> -&gt; run <code>pd-green</code></li>
+<li>otherwise -&gt; reverse motor <code>M:-200</code> for <code>1000 ms</code></li>
+</ul>
+<ol start="7">
+<li>Restart conveyor</li>
+<li>Repeat until stopped</li>
+</ol>
+<h2>6. Important data files</h2>
+<h3><code>positions.json</code></h3>
+<ul>
+<li>stores saved robot poses</li>
+</ul>
+<h3><code>workflows.json</code></h3>
+<ul>
+<li>stores workflows made from steps</li>
+</ul>
+<h3><code>automations.json</code></h3>
+<ul>
+<li>stores ultrasonic trigger rules</li>
+</ul>
+<h3><code>runtime_state.json</code></h3>
+<ul>
+<li>stores persistent runtime state</li>
+</ul>
+<h2>7. Why backend-owned state was needed</h2>
+<p>Earlier, frontend memory was behaving like the source of truth.</p>
+<p>That caused a serious robotics problem:</p>
+<ul>
+<li>old commanded state could get reapplied even if physical arm pose had changed</li>
+</ul>
+<p>So the design was corrected:</p>
+<ul>
+<li>backend owns runtime state</li>
+<li>frontend reads backend state</li>
+<li>persisted pose is treated as informational, not guaranteed physical truth</li>
+</ul>
+<p>This is a good viva point because it shows safety-aware design thinking.</p>
+<h2>8. Why color detection was moved away from Arduino logic</h2>
+<p>Originally, there was an attempt to classify color directly around Arduino-side sensor logic.</p>
+<p>That was changed because:</p>
+<ul>
+<li>camera-based CV was easier to tune</li>
+<li>backend-side classification is easier to change than reflashing firmware repeatedly</li>
+<li>it keeps Arduino simpler</li>
+</ul>
+<p>So now:</p>
+<ul>
+<li>camera sees object</li>
+<li><code>cv_detector.py</code> classifies color</li>
+<li>backend stores that result</li>
+<li>demo logic uses that result</li>
+</ul>
+<h2>9. Most important files to mention in viva</h2>
+<p>If asked “which files matter most?”, answer:</p>
+<h3>Core control</h3>
+<ul>
+<li><a href="./app.py">app.py</a></li>
+<li><a href="./state_store.py">state_store.py</a></li>
+</ul>
+<h3>UI</h3>
+<ul>
+<li><a href="./templates/index.html">templates/index.html</a></li>
+<li><a href="./static/script.js">static/script.js</a></li>
+</ul>
+<h3>Firmware</h3>
+<ul>
+<li><a href="./main_1.ino">main_1.ino</a></li>
+<li><a href="./main_2.ino">main_2.ino</a></li>
+</ul>
+<h3>Vision</h3>
+<ul>
+<li><a href="./cv_detector.py">cv_detector.py</a></li>
+</ul>
+<h2>10. Likely viva questions and safe answers</h2>
+<h3>Q. Why did you use two Arduinos?</h3>
+<p>Because the system has multiple servos, a conveyor motor, an ultrasonic sensor, LCD, and serial coordination. Splitting responsibilities made pin usage and task separation simpler:</p>
+<ul>
+<li>Arduino 1 handles structural joints + ultrasonic + LCD</li>
+<li>Arduino 2 handles wrist/gripper + DC motor</li>
+</ul>
+<h3>Q. Why is Python backend needed?</h3>
+<p>Because the backend is the main control layer. It is easier to implement workflows, automations, state persistence, and demo branching in Python than in microcontroller firmware.</p>
+<h3>Q. Why not do everything on Arduino?</h3>
+<p>Because higher-level orchestration is easier, faster to modify, and more maintainable in Python. Arduino is used for low-level actuation and sensor interfacing.</p>
+<h3>Q. How is color detected?</h3>
+<p>Using a webcam and OpenCV-based HSV color detection in the software layer. The detected color is then used by the backend logic.</p>
+<h3>Q. How is object presence detected?</h3>
+<p>Using the HC-SR04 ultrasonic sensor connected to Arduino 1. The distance is streamed to the backend over serial.</p>
+<h3>Q. What happens when an object is detected in demo mode?</h3>
+<p>The conveyor is running. When distance goes below 6 cm, the backend waits 1000 ms, stops the motor, checks the camera-detected color, then runs the correct workflow or a reject motor action, and finally restarts the conveyor.</p>
+<h3>Q. Why do you store runtime state?</h3>
+<p>To make the UI and backend consistent, preserve execution state across refresh/restart, and avoid depending only on browser memory.</p>
+<h3>Q. Is persisted pose always equal to real robot pose?</h3>
+<p>No. Persisted pose is the last commanded software state. Without encoder feedback, physical pose is not guaranteed. That distinction is important for safety.</p>
+<h3>Q. What is the role of the LCD?</h3>
+<p>It gives local machine feedback directly on the robot side:</p>
+<ul>
+<li>distance state</li>
+<li>workflow execution</li>
+<li>demo state</li>
+<li>automation status</li>
+</ul>
+<h3>Q. What is future scope?</h3>
+<p>Full automatic color-based sorting with more reliable classification, richer workflow branching, and more autonomous pick-and-place behavior.</p>
+<h2>11. What your teammate must remember</h2>
+<p>If they remember only 5 points, remember these:</p>
+<ol>
+<li><code>app.py</code> is the brain</li>
+<li>two Arduinos split low-level hardware control</li>
+<li>ultrasonic detects object presence</li>
+<li>camera CV detects color</li>
+<li>hardcoded demo branches into red / green / reject actions</li>
+</ol>
+<h2>12. Short emergency answer</h2>
+<p>If someone asks suddenly, this answer is enough:</p>
+<p>“Software-wise, the browser is only the interface. The main control logic is in the Flask backend, which talks to two Arduinos over serial, runs workflows and automations, reads ultrasonic input, gets color from OpenCV, and executes the sorting/demo logic. Runtime state is persisted so the system remains synchronized across sessions.”</p>
+
+</body>
+</html>
