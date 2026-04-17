@@ -1,0 +1,66 @@
+name: Update Index
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '**.html'
+      - '**.pdf'
+
+permissions:
+  contents: write
+
+jobs:
+  update-index:
+    runs-on: ubuntu-latest
+    # Skip when the Actions bot itself pushes (avoids an infinite loop)
+    if: github.actor != 'github-actions[bot]'
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Add new HTML/PDF files to index.html
+        run: |
+          # Files added (status A) in this push, excluding index.html itself
+          added=$(git diff --name-status HEAD^1 HEAD \
+            | awk '/^A\t/ {print $2}' \
+            | grep -E '\.(html|pdf)$' \
+            | grep -v '^index\.html$' || true)
+
+          if [ -z "$added" ]; then
+            echo "No new HTML/PDF files added – nothing to do."
+            exit 0
+          fi
+
+          changed=false
+          while IFS= read -r file; do
+            # Skip if already present in index.html
+            if grep -qF "href=\"$file\"" index.html; then
+              echo "Already indexed: $file"
+              continue
+            fi
+
+            # Derive a human-readable display name from the filename
+            display=$(python3 - "$file" <<'PYEOF'
+import sys, os
+stem = os.path.splitext(os.path.basename(sys.argv[1]))[0]
+print(stem.replace('-', ' ').replace('_', ' ').title())
+PYEOF
+)
+
+            # Insert new <li> just before the closing </ul>
+            sed -i "s|    </ul>|    <li><a href=\"$file\">$display</a></li>\n    </ul>|" index.html
+            echo "Indexed: $file  →  $display"
+            changed=true
+          done <<< "$added"
+
+          if [ "$changed" = true ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add index.html
+            git commit -m "chore: update index.html with new files [skip ci]"
+            git push
+          fi
