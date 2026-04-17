@@ -14,7 +14,7 @@ permissions:
 jobs:
   update-index:
     runs-on: ubuntu-latest
-    # Skip when the Actions bot itself pushes (avoids an infinite loop)
+    # Skip when the Actions bot itself pushes (prevents infinite loop)
     if: github.actor != 'github-actions[bot]'
 
     steps:
@@ -24,7 +24,10 @@ jobs:
 
       - name: Add new HTML/PDF files to index.html
         run: |
-          # Files added (status A) in this push, excluding index.html itself
+          set -euo pipefail
+
+          # Get only files that were *added* in this push (status A)
+          # Exclude index.html itself
           added=$(git diff --name-status HEAD^1 HEAD \
             | awk '/^A\t/ {print $2}' \
             | grep -E '\.(html|pdf)$' \
@@ -36,6 +39,7 @@ jobs:
           fi
 
           changed=false
+
           while IFS= read -r file; do
             # Skip if already present in index.html
             if grep -qF "href=\"$file\"" index.html; then
@@ -43,20 +47,18 @@ jobs:
               continue
             fi
 
-            # Derive a human-readable display name from the filename
-            display=$(python3 - "$file" <<'PYEOF'
-import sys, os
-stem = os.path.splitext(os.path.basename(sys.argv[1]))[0]
-print(stem.replace('-', ' ').replace('_', ' ').title())
-PYEOF
-)
+            # Create human-readable display name (pure Bash, no Python)
+            # Example: "my-awesome-page.html" → "My Awesome Page"
+            display=$(basename "${file%.*}" | tr '_-' ' ' | sed 's/\b\(.\)/\u\1/g')
 
-            # Insert new <li> just before the closing </ul>
-            sed -i "s|    </ul>|    <li><a href=\"$file\">$display</a></li>\n    </ul>|" index.html
-            echo "Indexed: $file  →  $display"
+            # Insert new <li> just before </ul> (very robust)
+            sed -i "/<\/ul>/i \  <li><a href=\"$file\">$display</a></li>" index.html
+
+            echo "Indexed: $file → $display"
             changed=true
           done <<< "$added"
 
+          # Only commit if we actually made changes
           if [ "$changed" = true ]; then
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
