@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400&family=Outfit:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+            body{font-family:'Cormorant Garamond',Georgia,serif;max-width:720px;margin:48px auto;padding:0 24px;color:#1a1a1a;line-height:1.9;background:#faf8f5;}
+            h1{font-size:2.5em;font-weight:700;margin:0 0 0.5em;letter-spacing:-0.03em;}
+            h2{font-size:1.6em;font-weight:600;margin:2em 0 0.75em;padding-bottom:0.5em;border-bottom:1px solid #e8e4dd;}
+            h3{font-family:'Outfit',sans-serif;font-size:1.1em;font-weight:600;margin:1.75em 0 0.75em;letter-spacing:0.02em;}
+            p{font-size:1.1em;margin:1em 0;text-align:justify;}
+            a{color:#c45c3e;text-decoration:none;border-bottom:1px solid currentColor;}
+            code{font-family:'JetBrains Mono',monospace;font-size:0.85em;background:#f5f2ed;padding:3px 8px;border-radius:3px;color:#9a3d25;border:1px solid #e8e4dd;}
+            pre{background:#1a1a1a;color:#f5f2ed;padding:24px;border-radius:4px;overflow-x:auto;margin:1.5em 0;line-height:1.6;border-top:3px solid #c45c3e;}
+            pre code{background:none;color:inherit;padding:0;border:none;}
+            blockquote{font-style:italic;color:#6b6b6b;border-left:3px solid #c45c3e;padding-left:24px;margin:1.5em 0;}
+            ul,ol{margin:1em 0;padding-left:1.5em;}
+            li{margin:0.5em 0;}
+            table{width:100%;border-collapse:collapse;margin:1.5em 0;font-family:'Outfit',sans-serif;font-size:0.9em;}
+            th{background:#f5f2ed;padding:14px 16px;text-align:left;font-weight:600;border-bottom:2px solid #1a1a1a;}
+            td{padding:14px 16px;border-bottom:1px solid #e8e4dd;}
+            hr{border:none;height:1px;background:#e8e4dd;margin:3em 0;}
+            img{max-width:100%;height:auto;border-radius:4px;margin:1.5em 0;}
+            .mermaid-diagram{margin:1.5em 0;text-align:center;}
+        </style>
+</head>
+<body>
+<h1>Upstream Readiness Checklist: <code>origin/sessions-redone</code> vs <code>upstream/main</code></h1>
+<p>Fetched review baseline:</p>
+<ul>
+<li><code>upstream/main</code> at <code>685fd42c3d8b3a3c26b5e96975a8656446a40682</code></li>
+<li><code>origin/sessions-redone</code> at <code>cc587a56da074b4e9f3c82c88a97440c02359f52</code></li>
+</ul>
+<p>Range summary after fetch: 50 files changed, <code>+4676 / -278</code>.</p>
+<p>This fetched range is focused on the 5-stage lifecycle rollout: canonical lifecycle state, recovery rules, explicit agent reporting, PR/session policy decoupling, and dashboard exposure of split truth.</p>
+<h2>1. Human Manual Verification</h2>
+<ul>
+<li><input disabled="" type="checkbox"> Manually verify lifecycle behavior on real sessions created before this branch existed. Old metadata without lifecycle v2 fields must load, render, and remain operable.</li>
+<li><input disabled="" type="checkbox"> Exercise the full session progression on a live repo:<ul>
+<li>spawn</li>
+<li>working</li>
+<li>PR opened</li>
+<li>CI failing</li>
+<li>review changes requested</li>
+<li>approved/merge-ready</li>
+<li>merged</li>
+</ul>
+</li>
+<li><input disabled="" type="checkbox"> Exercise failure paths on a live repo:<ul>
+<li>runtime missing/exited</li>
+<li>stuck/detecting escalation</li>
+<li>manual kill</li>
+<li>restore from restorable terminal state</li>
+<li>closed-unmerged PR</li>
+</ul>
+</li>
+<li><input disabled="" type="checkbox"> Verify <code>ao acknowledge</code> and <code>ao report &lt;state&gt;</code> from inside a managed session, including rejection cases for merged, terminated, runtime-dead, and orchestrator sessions.</li>
+<li><input disabled="" type="checkbox"> Verify the dashboard card lane placement and detail-page truth panels for these states: working, pending review, needs input, detecting, stuck, merged, terminated, closed-unmerged.</li>
+<li><input disabled="" type="checkbox"> Verify restore affordances are shown only when safe and hidden for merged/non-restorable sessions.</li>
+<li><input disabled="" type="checkbox"> Verify that a merged PR no longer incorrectly implies the worker runtime must already be dead.</li>
+<li><input disabled="" type="checkbox"> Verify operator comprehension: on the dashboard, a human should be able to answer separately whether the session is done, whether the PR is open/merged/closed, and whether the runtime is alive.</li>
+</ul>
+<h2>2. Skeptical Code-Review Agent Focus</h2>
+<p>Ask a skeptical reviewer to audit these areas in depth:</p>
+<ul>
+<li><input disabled="" type="checkbox"> <code>packages/core/src/lifecycle-manager.ts</code><ul>
+<li>transition precedence</li>
+<li>side-effect ordering</li>
+<li>detecting-state retry/escalation behavior</li>
+<li>event emission and observability payload correctness</li>
+</ul>
+</li>
+<li><input disabled="" type="checkbox"> <code>packages/core/src/lifecycle-state.ts</code>, <code>packages/core/src/session-manager.ts</code>, <code>packages/core/src/metadata.ts</code>, <code>packages/core/src/agent-report.ts</code><ul>
+<li>all lifecycle mutations</li>
+<li>persistence consistency</li>
+<li>rejection rules for agent self-reporting</li>
+<li>backward-compat synthesis from old metadata</li>
+</ul>
+</li>
+<li><input disabled="" type="checkbox"> <code>packages/core/src/recovery/validator.ts</code><ul>
+<li>evidence precedence</li>
+<li>disagreement handling</li>
+<li>human-vs-auto recovery decision boundaries</li>
+</ul>
+</li>
+<li><input disabled="" type="checkbox"> <code>packages/web/src/lib/serialize.ts</code>, <code>packages/web/src/lib/types.ts</code>, <code>packages/web/src/components/SessionCard.tsx</code>, <code>packages/web/src/components/SessionDetail.tsx</code><ul>
+<li>lifecycle serialization correctness</li>
+<li>consistency between dashboard card and detail page</li>
+<li>terminal/restorable/done decisions</li>
+</ul>
+</li>
+<li><input disabled="" type="checkbox"> <code>packages/core/src/types.ts</code><ul>
+<li>required <code>Session.lifecycle</code> field impact on downstream callers/tests/plugins</li>
+</ul>
+</li>
+<li><input disabled="" type="checkbox"> <code>packages/core/src/prompt-builder.ts</code> and <code>packages/core/src/prompts/orchestrator.md</code><ul>
+<li>confirm prompt changes are intentional and do not accidentally alter worker instructions beyond the lifecycle reporting additions</li>
+</ul>
+</li>
+</ul>
+<h2>3. Compatibility And Migration Checks</h2>
+<ul>
+<li><input disabled="" type="checkbox"> Confirm old sessions without <code>stateVersion: "2"</code> / <code>statePayload</code> synthesize a correct lifecycle on read with no migration script.</li>
+<li><input disabled="" type="checkbox"> Confirm <code>Session.lifecycle</code> becoming required does not break any external or semi-external construction sites outside the updated tests/helpers.</li>
+<li><input disabled="" type="checkbox"> Confirm legacy <code>session.status</code> consumers still behave acceptably via <code>deriveLegacyStatus()</code>, including the newly visible <code>detecting</code> state.</li>
+<li><input disabled="" type="checkbox"> Confirm existing restore/cleanup behavior remains correct when lifecycle truth disagrees with stale legacy status metadata.</li>
+<li><input disabled="" type="checkbox"> Confirm web serialization remains compatible with SSR and client rendering when lifecycle is absent on older session payloads.</li>
+<li><input disabled="" type="checkbox"> Confirm no tracker/SCM webhook behavior regressed because dashboard and API code now lean on lifecycle truth rather than older PR-state inference.</li>
+</ul>
+<h2>4. Product And Behavior Checks</h2>
+<ul>
+<li><input disabled="" type="checkbox"> Verify split lifecycle truth is actually more helpful than the old single status in the most common operator flows, not just more detailed.</li>
+<li><input disabled="" type="checkbox"> Verify merged sessions are clearly distinguished from closed-unmerged sessions.</li>
+<li><input disabled="" type="checkbox"> Verify runtime-dead but PR-open sessions are presented as actionable rather than falsely “done.”</li>
+<li><input disabled="" type="checkbox"> Verify <code>detecting</code> and related guidance text helps the human understand what AO is waiting on and when intervention is needed.</li>
+<li><input disabled="" type="checkbox"> Verify active PR sessions remain in working lanes after stage 5 and are not misbucketed as done/pending.</li>
+<li><input disabled="" type="checkbox"> Verify session-detail truth panels and labels are not noisy or contradictory for ordinary healthy working sessions.</li>
+</ul>
+<h2>5. Test And Rollout Checks</h2>
+<ul>
+<li><input disabled="" type="checkbox"> Run the required repo checks on the exact fetched branch state to be reviewed upstream:<ul>
+<li><code>pnpm build</code></li>
+<li><code>pnpm typecheck</code></li>
+<li><code>pnpm lint</code></li>
+<li><code>pnpm test</code></li>
+</ul>
+</li>
+<li><input disabled="" type="checkbox"> Re-run targeted tests for:<ul>
+<li><code>packages/core/src/__tests__/lifecycle-manager.test.ts</code></li>
+<li><code>packages/core/src/__tests__/agent-report.test.ts</code></li>
+<li><code>packages/core/src/__tests__/recovery-validator.test.ts</code></li>
+<li><code>packages/web/src/lib/__tests__/serialize.test.ts</code></li>
+<li><code>packages/web/src/lib/__tests__/types.test.ts</code></li>
+</ul>
+</li>
+<li><input disabled="" type="checkbox"> Add a manual or automated smoke pass for dashboard rendering against representative old-session and new-session payloads.</li>
+<li><input disabled="" type="checkbox"> Validate at least one end-to-end scenario where lifecycle metadata is written, reloaded from disk, and shown in the UI after a process restart.</li>
+<li><input disabled="" type="checkbox"> Have a rollback plan ready. This branch changes canonical state semantics across core and UI, so rollback should be defined before opening upstream.</li>
+</ul>
+<h2>6. Go / No-Go For Opening The Upstream PR</h2>
+<h3>Go only if all are true</h3>
+<ul>
+<li><input disabled="" type="checkbox"> Manual verification passes on live sessions covering happy path and failure path states.</li>
+<li><input disabled="" type="checkbox"> A skeptical reviewer signs off on lifecycle mutation correctness and recovery-rule precedence.</li>
+<li><input disabled="" type="checkbox"> Backward-compatibility checks for old metadata and legacy status consumers are complete.</li>
+<li><input disabled="" type="checkbox"> The required build, typecheck, lint, and test suite pass on the exact fetched commit.</li>
+<li><input disabled="" type="checkbox"> The upstream PR description clearly explains the 5-stage rollout and why the split session/PR/runtime model is worth the added complexity.</li>
+</ul>
+<h3>No-go if any are true</h3>
+<ul>
+<li><input disabled="" type="checkbox"> The UI still presents contradictory answers about done/restorable/terminated/merged.</li>
+<li><input disabled="" type="checkbox"> Any path allows agent self-reporting to override stronger runtime or PR ground truth incorrectly.</li>
+<li><input disabled="" type="checkbox"> Detecting/stuck escalation logic still feels too brittle under restart or probe-failure scenarios.</li>
+<li><input disabled="" type="checkbox"> Old sessions or external constructors break because <code>Session.lifecycle</code> is now mandatory.</li>
+<li><input disabled="" type="checkbox"> The branch is only green because the manual verification burden was skipped.</li>
+</ul>
+<h2>Suggested Reviewer Order</h2>
+<ol>
+<li>Review lifecycle mutation and precedence in core.</li>
+<li>Review backward-compat synthesis and persistence.</li>
+<li>Review UI serialization and truth rendering.</li>
+<li>Review manual product behavior on live sessions.</li>
+<li>Decide go/no-go for the upstream PR.</li>
+</ol>
+
+</body>
+</html>
