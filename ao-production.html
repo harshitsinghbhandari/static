@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400&family=Outfit:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+            body{font-family:'Cormorant Garamond',Georgia,serif;max-width:720px;margin:48px auto;padding:0 24px;color:#1a1a1a;line-height:1.9;background:#faf8f5;}
+            h1{font-size:2.5em;font-weight:700;margin:0 0 0.5em;letter-spacing:-0.03em;}
+            h2{font-size:1.6em;font-weight:600;margin:2em 0 0.75em;padding-bottom:0.5em;border-bottom:1px solid #e8e4dd;}
+            h3{font-family:'Outfit',sans-serif;font-size:1.1em;font-weight:600;margin:1.75em 0 0.75em;letter-spacing:0.02em;}
+            p{font-size:1.1em;margin:1em 0;text-align:justify;}
+            a{color:#c45c3e;text-decoration:none;border-bottom:1px solid currentColor;}
+            code{font-family:'JetBrains Mono',monospace;font-size:0.85em;background:#f5f2ed;padding:3px 8px;border-radius:3px;color:#9a3d25;border:1px solid #e8e4dd;}
+            pre{background:#1a1a1a;color:#f5f2ed;padding:24px;border-radius:4px;overflow-x:auto;margin:1.5em 0;line-height:1.6;border-top:3px solid #c45c3e;}
+            pre code{background:none;color:inherit;padding:0;border:none;}
+            blockquote{font-style:italic;color:#6b6b6b;border-left:3px solid #c45c3e;padding-left:24px;margin:1.5em 0;}
+            ul,ol{margin:1em 0;padding-left:1.5em;}
+            li{margin:0.5em 0;}
+            table{width:100%;border-collapse:collapse;margin:1.5em 0;font-family:'Outfit',sans-serif;font-size:0.9em;}
+            th{background:#f5f2ed;padding:14px 16px;text-align:left;font-weight:600;border-bottom:2px solid #1a1a1a;}
+            td{padding:14px 16px;border-bottom:1px solid #e8e4dd;}
+            hr{border:none;height:1px;background:#e8e4dd;margin:3em 0;}
+            img{max-width:100%;height:auto;border-radius:4px;margin:1.5em 0;}
+            .mermaid-diagram{margin:1.5em 0;text-align:center;}
+        </style>
+</head>
+<body>
+<h1>Agent Orchestrator — Launch Video Production Guide</h1>
+<p>A concrete production plan for creating a 75-second launch video for Agent Orchestrator using the <code>video-use</code> Claude Code skill.</p>
+<p><strong>Target deliverable:</strong> <code>final.mp4</code>, 1920×1080 @ 24fps, ~75 seconds, social-ready audio (-14 LUFS / -1 dBTP / LRA 11).</p>
+<p><strong>Pipeline:</strong> record raw takes → drop in folder → invoke Claude → skill transcribes, packs, cuts, grades, animates, subtitles, and self-evaluates.</p>
+<hr>
+<h2>Table of Contents</h2>
+<ol>
+<li><a href="#part-1--the-script-75s-target">The Script</a></li>
+<li><a href="#part-2--recording-session-a-talking-head">Recording Session A — Talking Head</a></li>
+<li><a href="#part-3--recording-session-b-screen-captures">Recording Session B — Screen Captures</a></li>
+<li><a href="#part-4--recording-session-c-optional-extras">Recording Session C — Optional Extras</a></li>
+<li><a href="#part-5--what-the-skill-will-generate-you-dont-record-these">What the Skill Will Generate</a></li>
+<li><a href="#part-6--folder-setup-before-editing">Folder Setup Before Editing</a></li>
+<li><a href="#part-7--pre-flight-checks">Pre-flight Checks</a></li>
+<li><a href="#part-8--invoke-the-edit">Invoke the Edit</a></li>
+<li><a href="#part-9--the-iteration-loop">Iteration Loop</a></li>
+<li><a href="#part-10--critical-donts">Critical Don'ts</a></li>
+<li><a href="#appendix-a--how-video-use-works-under-the-hood">How <code>video-use</code> Works Under the Hood</a></li>
+</ol>
+<hr>
+<h2>Part 1 — The Script (75s target)</h2>
+<p>Write this on paper first. Memorize roughly. Don't read verbatim — speak naturally. The skill will cut the <code>umm</code>s and false starts at word-boundary precision, so don't worry about perfection.</p>
+<h3>Beat 1 — HOOK (0:00–0:08, ~8s)</h3>
+<blockquote>
+<p>"You've been running one coding agent at a time. Claude Code, Codex, Aider — one window, one task, one wait. You're leaving ten-x on the table."</p>
+</blockquote>
+<h3>Beat 2 — PROBLEM (0:08–0:22, ~14s)</h3>
+<blockquote>
+<p>"Every time CI fails, you context-switch back. Every time review comments land, you context-switch back. Your agent is blocked, and you're the bottleneck. That's not how this scales."</p>
+</blockquote>
+<h3>Beat 3 — SOLUTION (0:22–0:40, ~18s)</h3>
+<blockquote>
+<p>"Agent Orchestrator spawns any coding agent — Claude Code, Codex, Aider, OpenCode — in its own git worktree, with its own PR, running in parallel. Eight agents at once. One dashboard. They fix CI failures themselves. They address review comments themselves. They manage their own PRs."</p>
+</blockquote>
+<h3>Beat 4 — BENEFIT (0:40–0:52, ~12s)</h3>
+<blockquote>
+<p>"Every abstraction is a plugin slot. Runtime, agent, workspace, tracker, SCM, notifier — swap any of them. tmux or process. GitHub or Linear or GitLab. Desktop notifications or Slack. It's your stack."</p>
+</blockquote>
+<h3>Beat 5 — EXAMPLE (0:52–1:08, ~16s)</h3>
+<blockquote>
+<p>"One config file. <code>ao spawn</code>. Watch eight agents ship eight PRs while you drink coffee. CI is green by the time you're back."</p>
+</blockquote>
+<h3>Beat 6 — CTA (1:08–1:15, ~7s)</h3>
+<blockquote>
+<p>"Agent Orchestrator. MIT licensed. github.com/ComposioHQ/agent-orchestrator. Ship more in parallel."</p>
+</blockquote>
+<p><strong>Total:</strong> ~75s. <strong>Record 3–5 takes per beat.</strong> Short beats = more takes (they're cheap). Long beats = 3 takes is fine.</p>
+<hr>
+<h2>Part 2 — Recording Session A: Talking Head</h2>
+<h3>Gear checklist</h3>
+<ul>
+<li><strong>Camera:</strong> phone on tripod is fine (iPhone 14+ or equivalent). 4K@24fps if possible.</li>
+<li><strong>Mic:</strong> lav clipped to shirt, OR shotgun ~60cm overhead out of frame. Avoid built-in camera mic.</li>
+<li><strong>Headphones:</strong> during recording so you catch your own pops/sibilance.</li>
+<li><strong>Lighting:</strong> one key light 45° to your left, one fill light opposite or a white wall bounce. No overhead kitchen light (ugly shadows under eyes).</li>
+</ul>
+<h3>Room setup</h3>
+<ul>
+<li>Background 2m behind you, slightly out of focus.</li>
+<li>Phone/computer away from you (no fan noise, no notifications).</li>
+<li>Close windows (traffic, birds).</li>
+<li>Test record 10s, play back in headphones. Listen for hum, hiss, echo. Fix before proceeding.</li>
+</ul>
+<h3>Camera settings</h3>
+<ul>
+<li><strong>Resolution:</strong> 3840×2160 (4K) or 1920×1080</li>
+<li><strong>Frame rate:</strong> <strong>24fps</strong> (cinematic) — match <code>render.py</code>'s <code>-r 24</code> output</li>
+<li><strong>Shutter:</strong> 1/48 for 24fps (180° shutter rule)</li>
+<li><strong>ISO:</strong> lowest that gets clean exposure</li>
+<li><strong>White balance:</strong> manually set (not auto — it drifts between takes)</li>
+<li><strong>Focus:</strong> manual, locked on your eyes</li>
+<li><strong>Framing:</strong> upper third, eyes on the top-third line, 30% headroom. Centered OR rule-of-thirds.</li>
+</ul>
+<h3>Audio settings</h3>
+<ul>
+<li><strong>Sample rate:</strong> 48kHz</li>
+<li><strong>Bit depth:</strong> 24-bit</li>
+<li><strong>Level:</strong> peaks at −12dB, average around −18dB. Never clip.</li>
+<li><strong>Monitor</strong> with headphones while recording.</li>
+</ul>
+<h3>Shot list — Talking Head</h3>
+<p>Shoot 3–5 takes of each beat. Slate each take ("Beat 1, take 1" — clap hands on camera for a sync point).</p>
+<table>
+<thead>
+<tr>
+<th>Clip name</th>
+<th>Beat</th>
+<th># takes</th>
+<th>What to capture</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>TH_hook_01</code>..<code>05</code></td>
+<td>Hook</td>
+<td>5</td>
+<td>Beat 1 script, direct to camera, confident tone</td>
+</tr>
+<tr>
+<td><code>TH_problem_01</code>..<code>05</code></td>
+<td>Problem</td>
+<td>5</td>
+<td>Beat 2 script, slightly frustrated tone</td>
+</tr>
+<tr>
+<td><code>TH_solution_01</code>..<code>05</code></td>
+<td>Solution</td>
+<td>5</td>
+<td>Beat 3 script, energetic, confident</td>
+</tr>
+<tr>
+<td><code>TH_benefit_01</code>..<code>03</code></td>
+<td>Benefit</td>
+<td>3</td>
+<td>Beat 4 script, matter-of-fact</td>
+</tr>
+<tr>
+<td><code>TH_example_01</code>..<code>03</code></td>
+<td>Example</td>
+<td>3</td>
+<td>Beat 5 script, playful ("drink coffee")</td>
+</tr>
+<tr>
+<td><code>TH_cta_01</code>..<code>05</code></td>
+<td>CTA</td>
+<td>5</td>
+<td>Beat 6 script, clean delivery, hit the URL</td>
+</tr>
+</tbody></table>
+<p><strong>Before you stop recording, record 30 seconds of room tone</strong> (total silence, camera rolling). The skill may not need it, but if it does, you'll have it.</p>
+<h3>Naming convention</h3>
+<p>File names become the source IDs in <code>takes_packed.md</code>. Use short unique names:</p>
+<pre><code>TH_hook_01.mp4
+TH_hook_02.mp4
+...
+TH_cta_05.mp4
+</code></pre>
+<hr>
+<h2>Part 3 — Recording Session B: Screen Captures</h2>
+<p>Record these separately in a clean OS session. No notifications, no chat apps, no browser tabs cluttered.</p>
+<h3>Setup</h3>
+<ul>
+<li><strong>Tool:</strong> macOS screen recorder (Cmd+Shift+5) OR OBS at 60fps for smooth motion</li>
+<li><strong>Resolution:</strong> record at native display (2560×1600, 2880×1800, whatever your Mac is) — we downscale to 1080p</li>
+<li><strong>Framerate:</strong> 60fps if available (enables clean 24fps or slow-mo in the edit)</li>
+<li><strong>Cursor:</strong> clean, no highlighting software unless you want a subtle ring</li>
+<li><strong>Audio:</strong> NO audio on these — we use talking-head audio throughout</li>
+<li><strong>Clean the UI:</strong> close every extra tab, clear notifications, empty the dock if possible</li>
+</ul>
+<h3>Preparation</h3>
+<p>Set up a <strong>test repo</strong> with 2–3 real issues on GitHub you can spawn agents against. This gives you genuine dashboard activity, not mocks.</p>
+<pre><code class="language-bash"># In your AO workspace, open the dashboard:
+pnpm dev
+# Dashboard at http://localhost:3000
+</code></pre>
+<h3>Shot list — Screen Captures</h3>
+<table>
+<thead>
+<tr>
+<th>Clip name</th>
+<th>Duration</th>
+<th>Content</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>SC_dashboard_wide_01</code></td>
+<td>30s</td>
+<td>Dashboard with 4–8 active sessions, cards across the kanban columns. Slowly scroll/pan.</td>
+</tr>
+<tr>
+<td><code>SC_dashboard_wide_02</code></td>
+<td>30s</td>
+<td>Second take, different state distribution (more in <code>pr_open</code>, <code>ci_failed</code>)</td>
+</tr>
+<tr>
+<td><code>SC_session_card_zoom</code></td>
+<td>15s</td>
+<td>Close crop of one session card updating its status badge</td>
+</tr>
+<tr>
+<td><code>SC_spawn_cli_01</code></td>
+<td>20s</td>
+<td>Terminal. <code>ao spawn --agent claude-code --issue 42</code>. Let it run, show logs.</td>
+</tr>
+<tr>
+<td><code>SC_spawn_cli_02</code></td>
+<td>20s</td>
+<td>Same but with a different agent (<code>--agent codex</code>)</td>
+</tr>
+<tr>
+<td><code>SC_terminal_attach</code></td>
+<td>25s</td>
+<td>Click a session card → terminal view (<code>DirectTerminal.tsx</code>) → agent typing code</td>
+</tr>
+<tr>
+<td><code>SC_state_transition_01</code></td>
+<td>20s</td>
+<td>Session card in <code>working</code> → <code>pr_open</code> transition on screen</td>
+</tr>
+<tr>
+<td><code>SC_state_transition_02</code></td>
+<td>20s</td>
+<td>Session card in <code>ci_failed</code> → <code>mergeable</code> → <code>merged</code></td>
+</tr>
+<tr>
+<td><code>SC_pr_on_github</code></td>
+<td>15s</td>
+<td>Actual GitHub PR page opened by an agent. Scroll through description + commits.</td>
+</tr>
+<tr>
+<td><code>SC_ci_green</code></td>
+<td>10s</td>
+<td>GitHub Actions checks turning green on the PR</td>
+</tr>
+<tr>
+<td><code>SC_config_yaml</code></td>
+<td>15s</td>
+<td>VS Code open on <code>agent-orchestrator.yaml</code>. Zoomed. Scroll through plugin slots.</td>
+</tr>
+<tr>
+<td><code>SC_plugin_tree</code></td>
+<td>10s</td>
+<td>VS Code sidebar showing <code>packages/plugins/</code> directory, 20+ plugins visible</td>
+</tr>
+</tbody></table>
+<p><strong>Tip:</strong> Record 30% more than you think you need. Short B-roll clips (2–4s) are what you'll actually use.</p>
+<hr>
+<h2>Part 4 — Recording Session C: Optional Extras</h2>
+<p>Only if you want a cinematic feel:</p>
+<table>
+<thead>
+<tr>
+<th>Clip name</th>
+<th>Duration</th>
+<th>Content</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>BR_laptop_typing_01</code></td>
+<td>15s</td>
+<td>Overhead or side shot of hands typing</td>
+</tr>
+<tr>
+<td><code>BR_coffee_cup_01</code></td>
+<td>10s</td>
+<td>Coffee cup near keyboard (matches "drink coffee" line)</td>
+</tr>
+<tr>
+<td><code>BR_desk_wide_01</code></td>
+<td>20s</td>
+<td>Wide shot of workspace, laptop screen visible but illegible</td>
+</tr>
+</tbody></table>
+<p>Shoot these with shallow depth of field if you can.</p>
+<hr>
+<h2>Part 5 — What the Skill Will Generate (you don't record these)</h2>
+<p>These five animations will be built by <strong>parallel sub-agents</strong> during the edit (Hard Rule 10 — never sequential). You just tell Claude to build them.</p>
+<table>
+<thead>
+<tr>
+<th>Slot</th>
+<th>What it shows</th>
+<th>Where it plays</th>
+<th>Duration</th>
+<th>Tool</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>1</strong> Parallel counter</td>
+<td>"1 agent" → "8 agents" with ease-out-cubic, orange accent</td>
+<td>Over HOOK beat end</td>
+<td>3s</td>
+<td>PIL</td>
+</tr>
+<tr>
+<td><strong>2</strong> Plugin slot grid</td>
+<td>8 plugin cards reveal one-by-one (Runtime/Agent/Workspace/Tracker/SCM/Notifier/Terminal/Lifecycle)</td>
+<td>Over BENEFIT beat</td>
+<td>7s</td>
+<td>PIL</td>
+</tr>
+<tr>
+<td><strong>3</strong> State machine</td>
+<td>Manim rendering of <code>spawning → working → pr_open → ci_failed/review → merged</code></td>
+<td>Over SOLUTION beat mid</td>
+<td>10s</td>
+<td>Manim</td>
+</tr>
+<tr>
+<td><strong>4</strong> Parallel vs serial timeline</td>
+<td>Two bar timelines, one sequential, one 8-parallel. Same total work.</td>
+<td>Over SOLUTION beat end</td>
+<td>5s</td>
+<td>PIL</td>
+</tr>
+<tr>
+<td><strong>5</strong> CTA tail card</td>
+<td>Logo, URL, MIT badge</td>
+<td>Over CTA beat</td>
+<td>5s</td>
+<td>PIL</td>
+</tr>
+</tbody></table>
+<p><strong>Palette</strong> (reused from the video-use shipped launch video — matches AO's dev-tool aesthetic):</p>
+<ul>
+<li>Background <code>#0A0A0A</code> near-black</li>
+<li>Accent <code>#FF5A00</code> orange</li>
+<li>Labels <code>#6E6E6E</code> dim gray</li>
+<li>Font: Menlo Bold (<code>/System/Library/Fonts/Menlo.ttc</code> index 1)</li>
+</ul>
+<hr>
+<h2>Part 6 — Folder Setup Before Editing</h2>
+<p>Create this exact structure on disk. Put <code>&lt;videos_dir&gt;</code> anywhere — desktop, Dropbox, wherever.</p>
+<pre><code>~/ao-launch-video/
+├── TH_hook_01.mp4
+├── TH_hook_02.mp4
+├── TH_hook_03.mp4
+├── ... (all talking head takes)
+├── SC_dashboard_wide_01.mov
+├── SC_dashboard_wide_02.mov
+├── ... (all screen captures)
+├── BR_laptop_typing_01.mp4
+└── (B-roll, optional)
+</code></pre>
+<p>Flat. No subfolders. The skill puts its output in <code>~/ao-launch-video/edit/</code>.</p>
+<hr>
+<h2>Part 7 — Pre-flight Checks</h2>
+<p>Before invoking Claude, verify:</p>
+<pre><code class="language-bash"># ffmpeg installed
+ffmpeg -version
+
+# yt-dlp installed (optional, for online sources)
+yt-dlp --version
+
+# ElevenLabs API key set
+cat ~/.agents/skills/video-use/.env
+# Should contain: ELEVENLABS_API_KEY=...
+
+# Python deps installed
+cd ~/.agents/skills/video-use
+pip install -e .
+</code></pre>
+<p><strong>Cost note:</strong> transcribing ~40 minutes of raw takes via ElevenLabs Scribe will cost a few dollars. Not free.</p>
+<hr>
+<h2>Part 8 — Invoke the Edit</h2>
+<pre><code class="language-bash">cd ~/ao-launch-video
+claude
+</code></pre>
+<p>Then paste this prompt:</p>
+<pre><code>Use the video-use skill. Edit these raw takes into a launch video for
+Agent Orchestrator (AO), an open-source platform for spawning parallel
+AI coding agents.
+
+Target: ~75 seconds, 1920×1080 @ 24fps, YouTube/landing-page hero.
+
+Archetype: Tech launch. HOOK → PROBLEM → SOLUTION → BENEFIT → EXAMPLE → CTA.
+
+Sources:
+- TH_*.mp4 files are talking-head takes of the script (multiple takes
+  per beat — pick the best)
+- SC_*.mov files are screen captures of the dashboard, CLI, and GitHub
+- BR_*.mp4 files are optional B-roll
+
+Grade: warm_cinematic preset.
+
+Subtitles: 2-word UPPERCASE chunks, bold-overlay style. Burn them LAST.
+
+Animations (build 5 in parallel sub-agents, palette: near-black bg,
+#FF5A00 accent, dim gray labels, Menlo Bold):
+
+  1. PIL counter: "1 agent" → "8 agents", ease-out-cubic, 3s.
+     Plays at the end of HOOK.
+
+  2. PIL plugin grid: 8 cards revealing sequentially (Runtime, Agent,
+     Workspace, Tracker, SCM, Notifier, Terminal, Lifecycle). 7s.
+     Plays over BENEFIT.
+
+  3. Manim state machine: nodes for spawning, working, pr_open,
+     ci_failed, review_pending, mergeable, merged. Edges animating
+     through a happy-path traversal. 10s. Plays mid-SOLUTION.
+
+  4. PIL timeline comparison: two horizontal bars — "sequential: 8
+     tasks back-to-back" vs "parallel: 8 tasks stacked". Same total
+     work, 1/8 the wall time. 5s. End of SOLUTION.
+
+  5. PIL CTA card: "Agent Orchestrator",
+     "github.com/ComposioHQ/agent-orchestrator", "MIT", orange accent,
+     Menlo Bold. 5s. Plays over CTA.
+
+Must-preserve: the URL at the end must be fully legible for 2s+.
+
+Pacing: tight on hooks, breathing room between beats, 400–600ms
+speaker handoffs.
+
+Inventory the sources, pack the transcripts, propose a strategy in
+plain English, and wait for my OK before cutting.
+</code></pre>
+<hr>
+<h2>Part 9 — The Iteration Loop</h2>
+<p>After the first preview, you'll want to iterate. Natural-language feedback works:</p>
+<ul>
+<li>"Hook feels slow — tighten by 2 seconds."</li>
+<li>"Use Take 3 for the SOLUTION beat, not Take 1 — more energy."</li>
+<li>"Make the state-machine animation 12s, not 10s, it's hard to follow."</li>
+<li>"The plugin grid reveals too fast — 1.2s per card instead of 0.8s."</li>
+<li>"Swap in the coffee cup B-roll over 'drink coffee'."</li>
+<li>"Subtitles are covering the plugin grid — lift them."</li>
+</ul>
+<p>The skill re-plans, re-renders, and re-evaluates. Never re-transcribes (cached per source). Persists decisions to <code>project.md</code> so next session picks up where you left off.</p>
+<hr>
+<h2>Part 10 — Critical Don'ts</h2>
+<ul>
+<li><strong>Don't</strong> change frame rate mid-session. Pick 24 or 30, stick with it.</li>
+<li><strong>Don't</strong> use the built-in camera mic. You'll regret it.</li>
+<li><strong>Don't</strong> record in a room with a fridge/AC running — the hum destroys the transcript.</li>
+<li><strong>Don't</strong> skip the 10s of room tone at the end.</li>
+<li><strong>Don't</strong> edit footage yourself before feeding it to the skill. Hand over raw takes.</li>
+<li><strong>Don't</strong> re-record just because you stumbled — that's what the skill is for.</li>
+<li><strong>Don't</strong> try to match takes visually before editing. Consistent lighting + background does all the work.</li>
+</ul>
+<hr>
+<h2>Appendix A — How <code>video-use</code> Works Under the Hood</h2>
+<pre><code>raw takes ─► transcribe.py (ElevenLabs Scribe, word-level) ─► transcripts/*.json
+                                                                   │
+                                                                   ▼
+                                       pack_transcripts.py ─► takes_packed.md
+                                                                   │
+                                                                   ▼
+                                              LLM reasons + asks + proposes strategy
+                                                                   │
+                                                  (you confirm the plain-English plan)
+                                                                   │
+                                                                   ▼
+                                                  editor sub-agent ─► edl.json
+                                                                   │
+                                                                   ▼
+                                                         render.py pipeline
+                                                                   │
+                                                                   ▼
+                                   per-segment extract (grade + 30ms fades baked in)
+                                                                   │
+                                                         lossless concat ─► base.mp4
+                                                                   │
+                                                     overlays (PTS-shifted) then subs LAST
+                                                                   │
+                                                                   ▼
+                                         loudnorm 2-pass (-14 LUFS / -1 dBTP / LRA 11)
+                                                                   │
+                                                                   ▼
+                                                            final.mp4
+                                                                   │
+                                                                   ▼
+                                 self-eval loop (timeline_view at every cut boundary,
+                                 max 3 retries, flag to user if still broken)
+</code></pre>
+<h3>Key principle</h3>
+<p>The LLM never watches the video — it <strong>reads</strong> a packed text transcript (<code>takes_packed.md</code>, ~12KB per hour of footage) and only peeks at visuals (<code>timeline_view</code> PNGs) at decision points. Same idea as browser-use giving the LLM a structured DOM instead of a screenshot, applied to video.</p>
+<h3>Hard rules (non-negotiable, from SKILL.md)</h3>
+<ol>
+<li>Subtitles are applied LAST in the filter chain, after every overlay.</li>
+<li>Per-segment extract → lossless <code>-c copy</code> concat, not single-pass filtergraph.</li>
+<li>30ms audio fades at every segment boundary.</li>
+<li>Overlays use <code>setpts=PTS-STARTPTS+T/TB</code> to align frame 0 to window start.</li>
+<li>Master SRT uses output-timeline offsets.</li>
+<li>Never cut inside a word.</li>
+<li>Pad every cut edge (30–200ms working window).</li>
+<li>Word-level verbatim ASR only, never SRT/phrase mode.</li>
+<li>Cache transcripts per source.</li>
+<li>Parallel sub-agents for multiple animations, never sequential.</li>
+<li>Strategy confirmation before execution.</li>
+<li>All session outputs in <code>&lt;videos_dir&gt;/edit/</code>.</li>
+</ol>
+<h3>Output directory structure</h3>
+<pre><code>~/ao-launch-video/edit/
+├── project.md               ← memory; appended every session
+├── takes_packed.md          ← phrase-level transcripts
+├── edl.json                 ← cut decisions
+├── transcripts/&lt;name&gt;.json  ← cached raw Scribe JSON
+├── animations/slot_&lt;id&gt;/    ← per-animation source + render
+├── clips_graded/            ← per-segment extracts with grade + fades
+├── master.srt               ← output-timeline subtitles
+├── verify/                  ← self-eval frames / timeline PNGs
+├── preview.mp4
+└── final.mp4
+</code></pre>
+
+</body>
+</html>
