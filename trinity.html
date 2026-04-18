@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@400;500&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <!-- Mermaid removed - using pure CSS diagrams for reliability -->
   <style>
     :root {
       --bg-void: #05050a;
@@ -550,6 +550,537 @@
     @keyframes scroll-bounce {
       0%, 100% { top: 6px; opacity: 1; }
       50% { top: 14px; opacity: 0.3; }
+    }
+
+    /* ===== COMPACT HERO ===== */
+    .hero-compact {
+      min-height: auto;
+      padding: 3rem 2rem 2rem;
+    }
+
+    .hero-top {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .hero-trinity-mini {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .trinity-node-mini {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+
+    .trinity-node-mini.session {
+      background: linear-gradient(135deg, var(--session-core), var(--session-dim));
+      box-shadow: 0 0 20px var(--session-core);
+    }
+
+    .trinity-node-mini.pr {
+      background: linear-gradient(135deg, var(--pr-core), var(--pr-dim));
+      box-shadow: 0 0 20px var(--pr-core);
+    }
+
+    .trinity-node-mini.runtime {
+      background: linear-gradient(135deg, var(--runtime-core), var(--runtime-dim));
+      box-shadow: 0 0 20px var(--runtime-core);
+    }
+
+    .hero-text {
+      flex: 1;
+    }
+
+    .hero-title-compact {
+      font-family: var(--font-display);
+      font-size: 3rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, var(--text-primary), var(--session-glow));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.25rem;
+    }
+
+    .hero-tldr {
+      background: var(--glass);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .hero-tldr-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .hero-stats {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .hero-tldr-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+
+    @media (max-width: 768px) {
+      .hero-tldr-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .hero-tldr-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+
+    .hero-tldr-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      flex-shrink: 0;
+    }
+
+    .hero-tldr-icon.session { background: var(--session-dim); }
+    .hero-tldr-icon.pr { background: var(--pr-dim); }
+    .hero-tldr-icon.runtime { background: var(--runtime-dim); }
+    .hero-tldr-icon.compat { background: rgba(16,185,129,0.3); }
+
+    .hero-tldr-item strong {
+      display: block;
+      font-size: 0.9rem;
+      margin-bottom: 0.1rem;
+    }
+
+    .hero-tldr-item span {
+      font-size: 0.8rem;
+      color: var(--text-tertiary);
+    }
+
+    .hero-tldr-item code {
+      font-size: 0.75rem;
+      padding: 0.1rem 0.3rem;
+    }
+
+    .hero-compact .hero-cta {
+      justify-content: flex-start;
+    }
+
+    /* ===== REVIEW GUIDE ===== */
+    .review-intro {
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+      margin-bottom: 2rem;
+    }
+
+    .review-path {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .review-step {
+      display: flex;
+      gap: 1rem;
+      padding: 1.25rem;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      transition: all 0.2s ease;
+    }
+
+    .review-step:hover {
+      border-color: var(--session-dim);
+      transform: translateX(4px);
+    }
+
+    .review-step-skip {
+      opacity: 0.6;
+      border-style: dashed;
+    }
+
+    .review-step-skip:hover {
+      opacity: 0.8;
+    }
+
+    .review-step-number {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--session-core), var(--session-dim));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+
+    .review-step-skip .review-step-number {
+      background: var(--bg-elevated);
+      color: var(--text-muted);
+    }
+
+    .review-step-content h4 {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .review-step-content h4 code {
+      font-size: 0.85rem;
+    }
+
+    .review-step-desc {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+    }
+
+    .review-step-desc code {
+      font-size: 0.8rem;
+    }
+
+    .review-step-time {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      background: var(--bg-elevated);
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+    }
+
+    .file-delta {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--success);
+      background: rgba(16,185,129,0.15);
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      margin-left: 0.5rem;
+    }
+
+    .review-checklist {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 1.5rem;
+    }
+
+    .review-checklist h4 {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .review-check {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5rem 0;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+
+    .review-check input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--session-core);
+    }
+
+    .review-check:has(input:checked) {
+      color: var(--success);
+      text-decoration: line-through;
+      opacity: 0.7;
+    }
+
+    /* ===== RISK ASSESSMENT ===== */
+    .risk-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    @media (max-width: 900px) {
+      .risk-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .risk-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .risk-header {
+      padding: 0.75rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .risk-level {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 600;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+    }
+
+    .risk-high .risk-level {
+      background: rgba(239,68,68,0.2);
+      color: var(--error);
+    }
+
+    .risk-medium .risk-level {
+      background: rgba(245,158,11,0.2);
+      color: var(--warning);
+    }
+
+    .risk-low .risk-level {
+      background: rgba(16,185,129,0.2);
+      color: var(--success);
+    }
+
+    .risk-area {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    .risk-body {
+      padding: 1rem;
+    }
+
+    .risk-body p {
+      font-size: 0.9rem;
+      margin-bottom: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .risk-body p:last-child {
+      margin-bottom: 0;
+    }
+
+    .risk-files {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .risk-impact {
+      background: var(--glass);
+      padding: 0.5rem;
+      border-radius: 6px;
+      border-left: 3px solid var(--warning);
+    }
+
+    .rollback-section {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .rollback-section h3 {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+    }
+
+    .rollback-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .rollback-step {
+      padding: 1rem;
+      background: var(--glass);
+      border-radius: 8px;
+    }
+
+    .rollback-step strong {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: var(--text-primary);
+    }
+
+    .rollback-step p {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .what-wont-break {
+      background: rgba(16,185,129,0.05);
+      border: 1px solid rgba(16,185,129,0.2);
+      border-radius: 12px;
+      padding: 1.5rem;
+    }
+
+    .what-wont-break h3 {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+      color: var(--success);
+    }
+
+    .what-wont-break ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .what-wont-break li {
+      padding: 0.5rem 0;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      padding-left: 1.5rem;
+      position: relative;
+    }
+
+    .what-wont-break li::before {
+      content: '✓';
+      position: absolute;
+      left: 0;
+      color: var(--success);
+    }
+
+    /* ===== TEST SCENARIOS ===== */
+    .test-intro {
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+      margin-bottom: 2rem;
+    }
+
+    .test-scenarios {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .test-scenario {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 1.25rem;
+    }
+
+    .test-scenario-header {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .test-tag {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+    }
+
+    .test-tag.before {
+      background: rgba(239,68,68,0.15);
+      color: var(--error);
+    }
+
+    .test-tag.after {
+      background: rgba(16,185,129,0.15);
+      color: var(--success);
+    }
+
+    .test-scenario h4 {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .test-scenario > p {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.75rem;
+    }
+
+    .test-code {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.75rem;
+      background: var(--bg-deep);
+      border-radius: 8px;
+      flex-wrap: wrap;
+    }
+
+    .test-code code {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .test-assertion {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--success);
+    }
+
+    .test-summary {
+      display: flex;
+      gap: 2rem;
+      justify-content: center;
+      padding: 2rem;
+      background: var(--glass);
+      border-radius: 12px;
+    }
+
+    .test-stat {
+      text-align: center;
+    }
+
+    .test-stat-number {
+      display: block;
+      font-family: var(--font-display);
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--session-glow);
+    }
+
+    .test-stat-label {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-muted);
     }
 
     /* ===== MAIN CONTENT ===== */
@@ -1149,7 +1680,7 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    /* ===== MERMAID DIAGRAMS ===== */
+    /* ===== STATE DIAGRAM (Pure CSS) ===== */
     .diagram-container {
       background: var(--bg-surface);
       border: 1px solid var(--border-subtle);
@@ -1170,9 +1701,170 @@
       gap: 0.5rem;
     }
 
-    .mermaid {
+    .state-diagram {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 1rem;
+    }
+
+    .state-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      justify-content: center;
+    }
+
+    .state-row-main {
+      gap: 1rem;
+    }
+
+    .state-row-secondary {
+      gap: 2rem;
+      margin-top: 0.5rem;
+    }
+
+    .state-node {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      background: var(--bg-elevated);
+      border: 2px solid var(--border-subtle);
+      color: var(--text-secondary);
+      transition: all 0.2s ease;
+      cursor: default;
+    }
+
+    .state-node:hover {
+      border-color: var(--session-core);
+      color: var(--text-primary);
+    }
+
+    .state-node.start {
+      background: transparent;
+      border: none;
+      font-size: 1.5rem;
+      padding: 0;
+      color: var(--text-muted);
+    }
+
+    .state-node.active {
+      background: var(--session-dim);
+      border-color: var(--session-core);
+      color: var(--session-glow);
+      box-shadow: 0 0 20px rgba(124,58,237,0.3);
+    }
+
+    .state-node.warning {
+      background: rgba(245,158,11,0.15);
+      border-color: var(--warning);
+      color: var(--warning);
+    }
+
+    .state-node.error {
+      background: rgba(239,68,68,0.15);
+      border-color: var(--error);
+      color: var(--error);
+    }
+
+    .state-node.terminal {
+      background: var(--bg-deep);
+      border-style: dashed;
+    }
+
+    .state-arrow {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .state-arrow.down {
+      transform: rotate(0);
+    }
+
+    .state-spacer {
+      width: 80px;
+    }
+
+    .state-branches {
+      display: flex;
+      gap: 3rem;
+    }
+
+    .state-branch {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .branch-arrow {
+      color: var(--text-muted);
+    }
+
+    .branch-label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-muted);
+    }
+
+    .state-escalation {
+      margin-top: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: rgba(245,158,11,0.1);
+      border-radius: 6px;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--warning);
+    }
+
+    .diagram-legend {
       display: flex;
       justify-content: center;
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 2px solid;
+    }
+
+    .legend-dot.active {
+      background: var(--session-dim);
+      border-color: var(--session-core);
+    }
+
+    .legend-dot.warning {
+      background: rgba(245,158,11,0.15);
+      border-color: var(--warning);
+    }
+
+    .legend-dot.error {
+      background: rgba(239,68,68,0.15);
+      border-color: var(--error);
+    }
+
+    .legend-dot.terminal {
+      background: var(--bg-deep);
+      border-color: var(--text-muted);
+      border-style: dashed;
     }
 
     /* ===== TIMELINE ===== */
@@ -1570,10 +2262,10 @@
   <nav class="nav" id="nav">
     <div class="nav-logo">TRINITY</div>
     <div class="nav-links">
-      <a href="#overview" class="nav-link active" data-section="overview">Overview</a>
+      <a href="#review-guide" class="nav-link active" data-section="review-guide">Review Guide</a>
+      <a href="#risks" class="nav-link" data-section="risks">Risks</a>
       <a href="#architecture" class="nav-link" data-section="architecture">Architecture</a>
       <a href="#new-files" class="nav-link" data-section="new-files">New Files</a>
-      <a href="#changes" class="nav-link" data-section="changes">Changes</a>
       <a href="#migration" class="nav-link" data-section="migration">Migration</a>
     </div>
     <div class="nav-kbd">
@@ -1581,92 +2273,241 @@
     </div>
   </nav>
 
-  <!-- Hero Section -->
-  <header class="hero" id="hero">
-    <div class="hero-trinity">
-      <div class="trinity-orbit"></div>
-      <div class="trinity-orbit"></div>
-      <div class="trinity-orbit"></div>
-
-      <div class="trinity-node session" data-tooltip="What the agent is doing">SESSION</div>
-      <div class="trinity-node pr" data-tooltip="Pull request lifecycle">PR</div>
-      <div class="trinity-node runtime" data-tooltip="Process liveness">RUNTIME</div>
-
-      <div class="trinity-center">
-        <span class="trinity-center-icon">◬</span>
+  <!-- Hero Section - Compact -->
+  <header class="hero hero-compact" id="hero">
+    <div class="hero-top">
+      <div class="hero-trinity-mini">
+        <div class="trinity-node-mini session">S</div>
+        <div class="trinity-node-mini pr">PR</div>
+        <div class="trinity-node-mini runtime">R</div>
+      </div>
+      <div class="hero-text">
+        <h1 class="hero-title-compact">TRINITY</h1>
+        <p class="hero-subtitle">AO Canonical Lifecycle Architecture v2</p>
       </div>
     </div>
 
-    <h1 class="hero-title">TRINITY</h1>
-    <p class="hero-subtitle">AO Canonical Lifecycle Architecture</p>
-    <p class="hero-description">
-      A three-axis state machine that separates session workflow, PR state, and runtime liveness
-      into independent truth domains. Evidence-based transitions. Agent self-reporting.
-      Full backward compatibility.
-    </p>
-
-    <div class="hero-cta">
-      <a href="#overview" class="btn btn-primary">
-        <span>Explore Architecture</span>
-        <span>→</span>
-      </a>
-      <a href="#migration" class="btn btn-secondary">
-        <span>Migration Guide</span>
-      </a>
+    <!-- TL;DR RIGHT IN THE HERO -->
+    <div class="hero-tldr">
+      <div class="hero-tldr-header">
+        <span class="tldr-badge">WHY THIS MATTERS</span>
+        <span class="hero-stats">+11,564 / -1,415 lines · 109 files changed</span>
+      </div>
+      <div class="hero-tldr-grid">
+        <div class="hero-tldr-item">
+          <span class="hero-tldr-icon session">◎</span>
+          <div>
+            <strong>Three-axis lifecycle</strong>
+            <span>Session, PR, and runtime are now independent truth domains</span>
+          </div>
+        </div>
+        <div class="hero-tldr-item">
+          <span class="hero-tldr-icon runtime">⚡</span>
+          <div>
+            <strong>No more silent failures</strong>
+            <span>Probe errors → <code>detecting</code> state, not silent masking</span>
+          </div>
+        </div>
+        <div class="hero-tldr-item">
+          <span class="hero-tldr-icon pr">◉</span>
+          <div>
+            <strong>Agent self-reporting</strong>
+            <span><code>ao acknowledge</code> + <code>ao report</code> commands</span>
+          </div>
+        </div>
+        <div class="hero-tldr-item">
+          <span class="hero-tldr-icon compat">✓</span>
+          <div>
+            <strong>Zero-migration compat</strong>
+            <span>v1 sessions synthesized automatically, no data changes</span>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="hero-scroll-indicator">
-      <div class="scroll-arrow"></div>
-      <span>SCROLL TO EXPLORE</span>
+    <div class="hero-cta">
+      <a href="#review-guide" class="btn btn-primary">
+        <span>How to Review</span>
+        <span>→</span>
+      </a>
+      <a href="#risks" class="btn btn-secondary">
+        <span>Risk Assessment</span>
+      </a>
+      <a href="#architecture" class="btn btn-secondary">
+        <span>Architecture</span>
+      </a>
     </div>
   </header>
 
   <!-- Main Content -->
   <main class="main">
-    <!-- TL;DR Section -->
-    <section class="tldr">
-      <h2 class="tldr-title">
-        <span class="tldr-badge">5 KEY CHANGES</span>
-        Executive Summary
-      </h2>
-      <ul class="tldr-list">
-        <li class="tldr-item">
-          <div class="tldr-icon session">◎</div>
-          <div class="tldr-text">
-            <strong>Three-axis lifecycle</strong> — Session workflow, PR state, and runtime liveness are now independent axes that can disagree and be reasoned about separately.
+    <!-- REVIEW GUIDE - THE MOST IMPORTANT SECTION -->
+    <section class="section visible" id="review-guide">
+      <div class="section-header">
+        <span class="section-number">00</span>
+        <h2 class="section-title">How to Review This PR</h2>
+        <a href="#review-guide" class="section-anchor">#</a>
+      </div>
+
+      <p class="review-intro">
+        This is a <strong>+11,564 / -1,415 line diff</strong> touching 109 files. Here's the reading order that makes it manageable.
+      </p>
+
+      <div class="review-path">
+        <div class="review-step">
+          <div class="review-step-number">1</div>
+          <div class="review-step-content">
+            <h4>Start: <code class="inline-code">packages/core/src/types.ts</code> <span class="file-delta">+142</span></h4>
+            <p class="review-step-desc">The contract. Defines <code>CanonicalSessionLifecycle</code>, all states/reasons for the three axes, and <code>ActivitySignal</code>. Everything else implements this.</p>
+            <span class="review-step-time">5 min · foundation</span>
           </div>
-        </li>
-        <li class="tldr-item">
-          <div class="tldr-icon runtime">⚡</div>
-          <div class="tldr-text">
-            <strong>Evidence over inference</strong> — Every state transition records what evidence was consulted, with a new <code class="inline-code">detecting</code> intermediate state for uncertain situations.
+        </div>
+
+        <div class="review-step">
+          <div class="review-step-number">2</div>
+          <div class="review-step-content">
+            <h4>Then: <code class="inline-code">packages/core/src/lifecycle-state.ts</code> <span class="file-delta">+480 new</span></h4>
+            <p class="review-step-desc">The migration story. <code>parseCanonicalLifecycle()</code> handles v1→v2 synthesis. <code>deriveLegacyStatus()</code> handles v2→v1. This is backward compat in one file.</p>
+            <span class="review-step-time">10 min · critical path</span>
           </div>
-        </li>
-        <li class="tldr-item">
-          <div class="tldr-icon agent">🤖</div>
-          <div class="tldr-text">
-            <strong>Agent self-reporting</strong> — New <code class="inline-code">ao acknowledge</code> and <code class="inline-code">ao report</code> commands let agents declare their workflow phase explicitly.
+        </div>
+
+        <div class="review-step">
+          <div class="review-step-number">3</div>
+          <div class="review-step-content">
+            <h4>Then: <code class="inline-code">packages/core/src/lifecycle-status-decisions.ts</code> <span class="file-delta">+398 new</span></h4>
+            <p class="review-step-desc">Pure decision functions. <code>resolveProbeDecision()</code> handles signal disagreement. <code>createDetectingDecision()</code> handles retry budgets. All testable in isolation.</p>
+            <span class="review-step-time">10 min · pure logic</span>
           </div>
-        </li>
-        <li class="tldr-item">
-          <div class="tldr-icon pr">◉</div>
-          <div class="tldr-text">
-            <strong>Activity confidence</strong> — The <code class="inline-code">ActivitySignal</code> type wraps activity state with confidence (valid/stale/null/unavailable/probe_failure) and source.
+        </div>
+
+        <div class="review-step">
+          <div class="review-step-number">4</div>
+          <div class="review-step-content">
+            <h4>Then: <code class="inline-code">packages/core/src/lifecycle-manager.ts</code> <span class="file-delta">+694 / -156</span></h4>
+            <p class="review-step-desc">The biggest single change. Focus on <code>determineStatus()</code> which now uses a <code>commit()</code> closure. Skip imports — the meat is in the polling loop changes.</p>
+            <span class="review-step-time">15 min · behavioral core</span>
           </div>
-        </li>
-        <li class="tldr-item">
-          <div class="tldr-icon compat">✓</div>
-          <div class="tldr-text">
-            <strong>Zero-migration compatibility</strong> — Sessions created before this change get a synthesized lifecycle. The old <code class="inline-code">SessionStatus</code> values continue to work.
+        </div>
+
+        <div class="review-step">
+          <div class="review-step-number">5</div>
+          <div class="review-step-content">
+            <h4>Then: <code class="inline-code">packages/core/src/agent-report.ts</code> <span class="file-delta">+606 new</span></h4>
+            <p class="review-step-desc">Agent self-reporting (<code>ao acknowledge</code>, <code>ao report</code>). Review if you care about agents declaring their phase explicitly. New CLI commands too.</p>
+            <span class="review-step-time">8 min · new feature</span>
           </div>
-        </li>
-      </ul>
+        </div>
+
+        <div class="review-step">
+          <div class="review-step-number">6</div>
+          <div class="review-step-content">
+            <h4>Web: <code class="inline-code">packages/web/src/components/SessionDetail.tsx</code> <span class="file-delta">+102 / -789</span></h4>
+            <p class="review-step-desc">Massive refactor. Extracted into <code>SessionTruthPanel</code>, <code>SessionReportAuditPanel</code>, <code>SessionDetailPRCard</code>. Net deletion — that's good.</p>
+            <span class="review-step-time">10 min · UI changes</span>
+          </div>
+        </div>
+
+        <div class="review-step review-step-skip">
+          <div class="review-step-number">⏭</div>
+          <div class="review-step-content">
+            <h4>Skip: Mechanical changes (~70 files)</h4>
+            <p class="review-step-desc">Plugin tests, changesets, helper updates. All add <code>lifecycle</code> and <code>activitySignal</code> to satisfy the type checker. Trust CI here.</p>
+            <span class="review-step-time">~70 files · CI-verified</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="review-checklist">
+        <h4>Reviewer Checklist</h4>
+        <label class="review-check"><input type="checkbox"> Types make sense — states/reasons are well-named</label>
+        <label class="review-check"><input type="checkbox"> Backward compat — v1 sessions still work</label>
+        <label class="review-check"><input type="checkbox"> No silent failures — probe errors surface as <code>detecting</code></label>
+        <label class="review-check"><input type="checkbox"> Tests cover the new <code>detecting</code> → <code>stuck</code> escalation</label>
+        <label class="review-check"><input type="checkbox"> Web components handle all new states</label>
+      </div>
+    </section>
+
+    <!-- RISK ASSESSMENT -->
+    <section class="section" id="risks">
+      <div class="section-header">
+        <span class="section-number">01</span>
+        <h2 class="section-title">Risk Assessment</h2>
+        <a href="#risks" class="section-anchor">#</a>
+      </div>
+
+      <div class="risk-grid">
+        <div class="risk-card risk-high">
+          <div class="risk-header">
+            <span class="risk-level">HIGH IMPACT</span>
+            <span class="risk-area">Blast Radius</span>
+          </div>
+          <div class="risk-body">
+            <p><strong>Every session load path is affected.</strong></p>
+            <p>The <code class="inline-code">Session</code> interface now requires <code>lifecycle</code> and <code>activitySignal</code>. Every call to <code>sessionFromMetadata()</code>, <code>refreshSession()</code>, or direct Session construction must provide these.</p>
+            <p class="risk-files">Files touched: session-manager.ts, lifecycle-manager.ts, all plugin tests</p>
+          </div>
+        </div>
+
+        <div class="risk-card risk-medium">
+          <div class="risk-header">
+            <span class="risk-level">MEDIUM IMPACT</span>
+            <span class="risk-area">Behavioral Change</span>
+          </div>
+          <div class="risk-body">
+            <p><strong>Probe failures are no longer silent.</strong></p>
+            <p>Old behavior: <code>isAlive()</code> errors were caught and returned <code>true</code>. Sessions with probe failures appeared "alive."</p>
+            <p>New behavior: Probe failures enter <code>detecting</code> state. After 3 attempts or 5 minutes, they escalate to <code>stuck</code>.</p>
+            <p class="risk-impact">Impact: Sessions that were silently "working" may now show as "detecting" or "stuck."</p>
+          </div>
+        </div>
+
+        <div class="risk-card risk-low">
+          <div class="risk-header">
+            <span class="risk-level">LOW IMPACT</span>
+            <span class="risk-area">New Events</span>
+          </div>
+          <div class="risk-body">
+            <p><strong>New <code>pr.closed</code> event added.</strong></p>
+            <p>When a PR transitions from "open" to "closed", a new event fires. The default reaction is <code>notify</code>.</p>
+            <p class="risk-impact">Impact: Users will see new notifications for closed PRs. No action required.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="rollback-section">
+        <h3>🔄 Rollback Plan</h3>
+        <div class="rollback-steps">
+          <div class="rollback-step">
+            <strong>If metadata corruption:</strong>
+            <p>The system always writes both v1 flat keys AND v2 statePayload. Rolling back to pre-Trinity code will ignore statePayload and read the flat keys. No data loss.</p>
+          </div>
+          <div class="rollback-step">
+            <strong>If detecting state causes issues:</strong>
+            <p>The detecting → stuck escalation can be effectively disabled by setting <code>DETECTING_MAX_ATTEMPTS</code> to 999. This is a code change, not a config change.</p>
+          </div>
+          <div class="rollback-step">
+            <strong>If dashboard breaks:</strong>
+            <p>Web components have fallbacks for missing lifecycle data. If <code>session.lifecycle</code> is undefined, they fall back to <code>session.status</code>.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="what-wont-break">
+        <h3>✅ What Won't Break</h3>
+        <ul>
+          <li><strong>Existing sessions:</strong> v1 metadata is synthesized into v2 lifecycle automatically</li>
+          <li><strong>Existing reactions:</strong> <code>deriveLegacyStatus()</code> maps new lifecycle to old status strings</li>
+          <li><strong>Existing integrations:</strong> The API still returns <code>status</code> field alongside new lifecycle</li>
+          <li><strong>Spawn/kill/restore:</strong> All tested, all work with new lifecycle writes</li>
+        </ul>
+      </div>
     </section>
 
     <!-- Overview Section -->
     <section class="section" id="overview">
       <div class="section-header">
-        <span class="section-number">01</span>
+        <span class="section-number">02</span>
         <h2 class="section-title">Problem Statement</h2>
         <a href="#overview" class="section-anchor">#</a>
       </div>
@@ -1714,7 +2555,7 @@
     <!-- Architecture Section -->
     <section class="section" id="architecture">
       <div class="section-header">
-        <span class="section-number">02</span>
+        <span class="section-number">03</span>
         <h2 class="section-title">The Three-Axis Canonical Lifecycle</h2>
         <a href="#architecture" class="section-anchor">#</a>
       </div>
@@ -1803,28 +2644,66 @@
     └── tmuxName     // tmux session name</code></pre>
       </div>
 
-      <!-- State Machine Diagram -->
+      <!-- State Machine Diagram - Pure CSS -->
       <div class="diagram-container">
         <h3 class="diagram-title">
           <span>◬</span> Session State Transitions
         </h3>
-        <div class="mermaid">
-stateDiagram-v2
-    [*] --> not_started: spawn
-    not_started --> working: agent starts
-    working --> idle: waiting
-    working --> needs_input: blocked
-    working --> stuck: idle timeout
-    working --> detecting: probe failure
-    idle --> working: resumes
-    needs_input --> working: input received
-    detecting --> working: evidence clears
-    detecting --> stuck: budget exhausted
-    stuck --> working: recovery
-    working --> done: completed
-    working --> terminated: killed
-    done --> [*]
-    terminated --> [*]
+        <div class="state-diagram">
+          <div class="state-row">
+            <div class="state-node start">●</div>
+            <div class="state-arrow">→ spawn</div>
+            <div class="state-node" data-state="not_started">not_started</div>
+          </div>
+          <div class="state-row">
+            <div class="state-spacer"></div>
+            <div class="state-arrow down">↓ agent starts</div>
+          </div>
+          <div class="state-row state-row-main">
+            <div class="state-node terminal" data-state="done">done</div>
+            <div class="state-arrow left">← completed</div>
+            <div class="state-node active" data-state="working">working</div>
+            <div class="state-arrow right">→ blocked</div>
+            <div class="state-node warning" data-state="needs_input">needs_input</div>
+          </div>
+          <div class="state-row">
+            <div class="state-spacer"></div>
+            <div class="state-branches">
+              <div class="state-branch">
+                <span class="branch-arrow">↓</span>
+                <span class="branch-label">waiting</span>
+              </div>
+              <div class="state-branch">
+                <span class="branch-arrow">↓</span>
+                <span class="branch-label">probe fail</span>
+              </div>
+              <div class="state-branch">
+                <span class="branch-arrow">↓</span>
+                <span class="branch-label">idle timeout</span>
+              </div>
+            </div>
+          </div>
+          <div class="state-row state-row-secondary">
+            <div class="state-node" data-state="idle">idle</div>
+            <div class="state-node warning" data-state="detecting">detecting</div>
+            <div class="state-node error" data-state="stuck">stuck</div>
+          </div>
+          <div class="state-row">
+            <div class="state-escalation">
+              <span>detecting → stuck (3 attempts / 5 min budget)</span>
+            </div>
+          </div>
+          <div class="state-row">
+            <div class="state-node terminal error" data-state="terminated">terminated</div>
+            <div class="state-arrow left">← killed</div>
+            <div class="state-spacer"></div>
+          </div>
+        </div>
+        <div class="diagram-legend">
+          <span class="legend-item"><span class="legend-dot active"></span> Active</span>
+          <span class="legend-item"><span class="legend-dot warning"></span> Attention</span>
+          <span class="legend-item"><span class="legend-dot error"></span> Error</span>
+          <span class="legend-item"><span class="legend-dot terminal"></span> Terminal</span>
         </div>
       </div>
     </section>
@@ -1832,7 +2711,7 @@ stateDiagram-v2
     <!-- New Files Section -->
     <section class="section" id="new-files">
       <div class="section-header">
-        <span class="section-number">03</span>
+        <span class="section-number">04</span>
         <h2 class="section-title">New Files & Responsibilities</h2>
         <a href="#new-files" class="section-anchor">#</a>
       </div>
@@ -2038,7 +2917,7 @@ stateDiagram-v2
     <!-- Changes Section -->
     <section class="section" id="changes">
       <div class="section-header">
-        <span class="section-number">04</span>
+        <span class="section-number">05</span>
         <h2 class="section-title">Behavioral Changes</h2>
         <a href="#changes" class="section-anchor">#</a>
       </div>
@@ -2127,7 +3006,7 @@ stateDiagram-v2
     <!-- Migration Section -->
     <section class="section" id="migration">
       <div class="section-header">
-        <span class="section-number">05</span>
+        <span class="section-number">06</span>
         <h2 class="section-title">Migration & Compatibility</h2>
         <a href="#migration" class="section-anchor">#</a>
       </div>
@@ -2309,39 +3188,92 @@ stateDiagram-v2
     <!-- Test Coverage Section -->
     <section class="section" id="tests">
       <div class="section-header">
-        <span class="section-number">06</span>
+        <span class="section-number">07</span>
         <h2 class="section-title">Test Coverage</h2>
         <a href="#tests" class="section-anchor">#</a>
       </div>
 
-      <p>~2,000+ new/modified test lines across 15 test files covering all new modules and behavioral changes.</p>
+      <p class="test-intro">Here are scenarios that were <strong>impossible to test before</strong> — and now have dedicated test cases.</p>
 
-      <div class="axis-grid">
-        <div class="axis-card session" style="padding: 1.5rem;">
-          <h4 style="font-family: var(--font-display); margin-bottom: 0.5rem;">New Test Files</h4>
-          <ul style="font-size: 0.9rem; color: var(--text-secondary);">
-            <li>lifecycle-state.test.ts (59)</li>
-            <li>lifecycle-status-decisions.test.ts (207)</li>
-            <li>lifecycle-transition.test.ts (315)</li>
-            <li>agent-report.test.ts (518)</li>
-            <li>report-watcher.test.ts (259)</li>
-          </ul>
+      <div class="test-scenarios">
+        <div class="test-scenario">
+          <div class="test-scenario-header">
+            <span class="test-tag before">BEFORE: Untestable</span>
+            <span class="test-tag after">AFTER: Tested</span>
+          </div>
+          <h4>"Probe failure should not silently appear alive"</h4>
+          <p>Old behavior: <code>isAlive()</code> throws → caught → returns <code>true</code>. Session looks alive when it might be dead.</p>
+          <div class="test-code">
+            <code>lifecycle-status-decisions.test.ts:142</code>
+            <span class="test-assertion">expect(result.sessionState).toBe("detecting")</span>
+          </div>
         </div>
-        <div class="axis-card pr" style="padding: 1.5rem;">
-          <h4 style="font-family: var(--font-display); margin-bottom: 0.5rem;">Extended Tests</h4>
-          <ul style="font-size: 0.9rem; color: var(--text-secondary);">
-            <li>lifecycle-manager.test.ts (+628)</li>
-            <li>observability.test.ts (+59)</li>
-            <li>recovery-validator.test.ts (+427)</li>
-          </ul>
+
+        <div class="test-scenario">
+          <div class="test-scenario-header">
+            <span class="test-tag before">BEFORE: Untestable</span>
+            <span class="test-tag after">AFTER: Tested</span>
+          </div>
+          <h4>"Runtime alive + process dead should not immediately kill"</h4>
+          <p>Old behavior: Binary decision. New behavior: Enter <code>detecting</code>, retry 3 times over 5 minutes before escalating.</p>
+          <div class="test-code">
+            <code>lifecycle-status-decisions.test.ts:89</code>
+            <span class="test-assertion">expect(resolveProbeDecision({...}).decision).toBe("detecting")</span>
+          </div>
         </div>
-        <div class="axis-card runtime" style="padding: 1.5rem;">
-          <h4 style="font-family: var(--font-display); margin-bottom: 0.5rem;">Plugin Updates</h4>
-          <ul style="font-size: 0.9rem; color: var(--text-secondary);">
-            <li>All agent plugins</li>
-            <li>All SCM plugins</li>
-            <li>All terminal plugins</li>
-          </ul>
+
+        <div class="test-scenario">
+          <div class="test-scenario-header">
+            <span class="test-tag before">BEFORE: N/A</span>
+            <span class="test-tag after">AFTER: New Feature</span>
+          </div>
+          <h4>"Agent can report fixing_ci and lifecycle updates correctly"</h4>
+          <p>New feature: <code>ao report fixing_ci</code> sets <code>session.state: "working"</code>, <code>session.reason: "fixing_ci"</code>.</p>
+          <div class="test-code">
+            <code>agent-report.test.ts:234</code>
+            <span class="test-assertion">expect(result.lifecycle.session.reason).toBe("fixing_ci")</span>
+          </div>
+        </div>
+
+        <div class="test-scenario">
+          <div class="test-scenario-header">
+            <span class="test-tag before">BEFORE: Implicit</span>
+            <span class="test-tag after">AFTER: Explicit</span>
+          </div>
+          <h4>"v1 sessions synthesize into valid v2 lifecycle"</h4>
+          <p>Backward compat: A session with only <code>status=ci_failed</code> in metadata gets a full lifecycle with PR and session axes.</p>
+          <div class="test-code">
+            <code>lifecycle-state.test.ts:45</code>
+            <span class="test-assertion">expect(synthesized.pr.reason).toBe("in_progress")</span>
+          </div>
+        </div>
+
+        <div class="test-scenario">
+          <div class="test-scenario-header">
+            <span class="test-tag before">BEFORE: Silent</span>
+            <span class="test-tag after">AFTER: Evented</span>
+          </div>
+          <h4>"PR closed fires dedicated event"</h4>
+          <p>New event: When <code>pr.state</code> transitions from "open" to "closed", a <code>pr.closed</code> event fires.</p>
+          <div class="test-code">
+            <code>lifecycle-manager.test.ts:512</code>
+            <span class="test-assertion">expect(events).toContainEqual({type: "pr.closed", ...})</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="test-summary">
+        <div class="test-stat">
+          <span class="test-stat-number">3,500+</span>
+          <span class="test-stat-label">new test lines</span>
+        </div>
+        <div class="test-stat">
+          <span class="test-stat-number">27</span>
+          <span class="test-stat-label">test files touched</span>
+        </div>
+        <div class="test-stat">
+          <span class="test-stat-number">8</span>
+          <span class="test-stat-label">new test suites</span>
         </div>
       </div>
     </section>
@@ -2352,11 +3284,11 @@ stateDiagram-v2
     <div class="footer-logo">TRINITY</div>
     <p class="footer-text">AO Canonical Lifecycle Architecture v2.0</p>
     <div class="footer-links">
-      <a href="#overview" class="footer-link">Overview</a>
+      <a href="#review-guide" class="footer-link">Review Guide</a>
+      <a href="#risks" class="footer-link">Risks</a>
       <a href="#architecture" class="footer-link">Architecture</a>
-      <a href="#new-files" class="footer-link">New Files</a>
-      <a href="#changes" class="footer-link">Changes</a>
       <a href="#migration" class="footer-link">Migration</a>
+      <a href="#tests" class="footer-link">Tests</a>
     </div>
   </footer>
 
@@ -2368,11 +3300,19 @@ stateDiagram-v2
     <div class="command-box">
       <input type="text" class="command-input" placeholder="Jump to section..." id="commandInput" oninput="filterCommands(this.value)">
       <div class="command-results" id="commandResults">
-        <div class="command-item" onclick="navigateTo('overview')">
+        <div class="command-item" onclick="navigateTo('review-guide')">
+          <div class="command-item-icon">00</div>
+          <div class="command-item-content">
+            <div class="command-item-title">Review Guide</div>
+            <div class="command-item-desc">How to review this PR — reading order</div>
+          </div>
+          <div class="command-item-kbd">↵</div>
+        </div>
+        <div class="command-item" onclick="navigateTo('risks')">
           <div class="command-item-icon">01</div>
           <div class="command-item-content">
-            <div class="command-item-title">Overview</div>
-            <div class="command-item-desc">Problem statement and solution overview</div>
+            <div class="command-item-title">Risk Assessment</div>
+            <div class="command-item-desc">Blast radius, rollback plan</div>
           </div>
           <div class="command-item-kbd">↵</div>
         </div>
@@ -2392,19 +3332,19 @@ stateDiagram-v2
           </div>
           <div class="command-item-kbd">↵</div>
         </div>
-        <div class="command-item" onclick="navigateTo('changes')">
-          <div class="command-item-icon">04</div>
-          <div class="command-item-content">
-            <div class="command-item-title">Behavioral Changes</div>
-            <div class="command-item-desc">Before/after comparison</div>
-          </div>
-          <div class="command-item-kbd">↵</div>
-        </div>
         <div class="command-item" onclick="navigateTo('migration')">
-          <div class="command-item-icon">05</div>
+          <div class="command-item-icon">04</div>
           <div class="command-item-content">
             <div class="command-item-title">Migration</div>
             <div class="command-item-desc">Backward compatibility guide</div>
+          </div>
+          <div class="command-item-kbd">↵</div>
+        </div>
+        <div class="command-item" onclick="navigateTo('tests')">
+          <div class="command-item-icon">05</div>
+          <div class="command-item-content">
+            <div class="command-item-title">Test Coverage</div>
+            <div class="command-item-desc">New scenarios and test stories</div>
           </div>
           <div class="command-item-kbd">↵</div>
         </div>
@@ -2413,39 +3353,6 @@ stateDiagram-v2
   </div>
 
   <script>
-    // Initialize Mermaid
-    mermaid.initialize({
-      startOnLoad: true,
-      theme: 'dark',
-      themeVariables: {
-        primaryColor: '#7c3aed',
-        primaryTextColor: '#f8fafc',
-        primaryBorderColor: '#4c1d95',
-        lineColor: '#64748b',
-        secondaryColor: '#06b6d4',
-        tertiaryColor: '#0f0f1a',
-        background: '#0f0f1a',
-        mainBkg: '#1a1a2e',
-        secondBkg: '#161625',
-        border1: '#4c1d95',
-        border2: '#0e7490',
-        arrowheadColor: '#f8fafc',
-        fontFamily: 'Geist Mono, monospace',
-        fontSize: '14px',
-        stateBkg: '#1a1a2e',
-        stateLabelColor: '#f8fafc'
-      },
-      flowchart: {
-        curve: 'basis',
-        padding: 20
-      },
-      stateDiagram: {
-        labelFontSize: 12,
-        nodeSpacing: 50,
-        rankSpacing: 50
-      }
-    });
-
     // Progress bar
     window.addEventListener('scroll', () => {
       const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
