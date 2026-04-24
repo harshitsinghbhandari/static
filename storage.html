@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Why PR #1466 Matters</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #08090a;
+    --surface: #101217;
+    --surface-2: #171a21;
+    --border: #282d36;
+    --text: #ece8e1;
+    --muted: #9a9ca3;
+    --dim: #62666f;
+    --green: #3dd68c;
+    --green-soft: rgba(61, 214, 140, 0.13);
+    --blue: #65a7ff;
+    --blue-soft: rgba(101, 167, 255, 0.12);
+    --amber: #f0a030;
+    --amber-soft: rgba(240, 160, 48, 0.13);
+    --red: #e5534b;
+    --red-soft: rgba(229, 83, 75, 0.13);
+    --font-display: 'Instrument Serif', Georgia, serif;
+    --font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background:
+      radial-gradient(circle at top right, rgba(61, 214, 140, 0.08), transparent 34rem),
+      linear-gradient(180deg, #08090a 0%, #0b0d10 55%, #08090a 100%);
+    color: var(--text);
+    font-family: var(--font-body);
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.025;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  a { color: var(--green); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.88em;
+    color: var(--blue);
+    background: rgba(101, 167, 255, 0.08);
+    padding: 0.08rem 0.32rem;
+    border-radius: 4px;
+  }
+
+  .hero {
+    min-height: 92vh;
+    display: grid;
+    align-content: center;
+    padding: 7rem clamp(1.5rem, 7vw, 7rem) 5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .eyebrow {
+    color: var(--green);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-bottom: 1.4rem;
+  }
+
+  h1 {
+    font-family: var(--font-display);
+    font-size: clamp(3.4rem, 8vw, 7.2rem);
+    font-weight: 400;
+    line-height: 0.98;
+    letter-spacing: -0.03em;
+    max-width: 980px;
+  }
+
+  .hero-copy {
+    color: var(--muted);
+    font-size: clamp(1.05rem, 1.6vw, 1.26rem);
+    max-width: 760px;
+    margin-top: 2rem;
+  }
+
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 3rem;
+  }
+
+  .pill {
+    border: 1px solid var(--border);
+    background: rgba(16, 18, 23, 0.76);
+    border-radius: 999px;
+    padding: 0.7rem 0.95rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  .pill strong { color: var(--text); font-weight: 600; }
+
+  main {
+    max-width: 1060px;
+    margin: 0 auto;
+    padding: 0 clamp(1.4rem, 5vw, 4rem);
+  }
+
+  section {
+    padding: 5.5rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-label {
+    display: block;
+    color: var(--green);
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+
+  h2 {
+    font-family: var(--font-display);
+    font-size: clamp(2.25rem, 4vw, 4rem);
+    font-weight: 400;
+    line-height: 1.06;
+    letter-spacing: -0.02em;
+    max-width: 860px;
+    margin-bottom: 1.6rem;
+  }
+
+  h3 {
+    font-size: 1rem;
+    line-height: 1.3;
+    margin-bottom: 0.7rem;
+  }
+
+  p {
+    color: var(--muted);
+    max-width: 760px;
+    margin-bottom: 1rem;
+  }
+
+  .thesis {
+    border-left: 3px solid var(--green);
+    background: linear-gradient(90deg, var(--green-soft), transparent);
+    padding: 1.7rem 2rem;
+    margin: 2.3rem 0;
+    border-radius: 0 12px 12px 0;
+  }
+
+  .thesis p {
+    color: var(--text);
+    font-family: var(--font-display);
+    font-size: clamp(1.8rem, 3vw, 2.7rem);
+    line-height: 1.18;
+    max-width: none;
+    margin: 0;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+
+  .grid.three {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .card {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 1.45rem;
+  }
+
+  .card.good {
+    border-color: rgba(61, 214, 140, 0.35);
+    background:
+      linear-gradient(135deg, rgba(61, 214, 140, 0.11), transparent 58%),
+      var(--surface);
+  }
+
+  .card.warn {
+    border-color: rgba(240, 160, 48, 0.3);
+  }
+
+  .card p {
+    font-size: 0.95rem;
+    margin-bottom: 0;
+  }
+
+  .tag {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0.22rem 0.5rem;
+    border-radius: 4px;
+    margin-bottom: 0.9rem;
+  }
+
+  .tag.green { color: var(--green); background: var(--green-soft); }
+  .tag.blue { color: var(--blue); background: var(--blue-soft); }
+  .tag.amber { color: var(--amber); background: var(--amber-soft); }
+  .tag.red { color: var(--red); background: var(--red-soft); }
+
+  .path-compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin: 2rem 0;
+  }
+
+  .path-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.35rem;
+  }
+
+  .path-box.after {
+    border-color: rgba(61, 214, 140, 0.35);
+  }
+
+  .path-label {
+    color: var(--dim);
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: 0.8rem;
+  }
+
+  pre {
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    line-height: 1.75;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 2px;
+    overflow: hidden;
+    border-radius: 12px;
+    margin: 2.6rem 0;
+  }
+
+  .stat {
+    background: var(--surface);
+    padding: 1.5rem 1rem;
+    text-align: center;
+  }
+
+  .stat-value {
+    font-family: var(--font-display);
+    font-size: 2.3rem;
+    line-height: 1;
+  }
+
+  .stat-label {
+    color: var(--dim);
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-top: 0.55rem;
+  }
+
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 2rem;
+    font-size: 0.93rem;
+  }
+
+  .table th {
+    color: var(--dim);
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    padding: 0.8rem 0.9rem;
+  }
+
+  .table td {
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 0.9rem;
+    vertical-align: top;
+  }
+
+  .table td:first-child {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .checklist {
+    list-style: none;
+    display: grid;
+    gap: 0.65rem;
+    margin-top: 1.6rem;
+  }
+
+  .checklist li {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--muted);
+    padding: 0.9rem 1rem 0.9rem 2.45rem;
+    position: relative;
+  }
+
+  .checklist li::before {
+    content: '';
+    position: absolute;
+    left: 1rem;
+    top: 1.35rem;
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 999px;
+    background: var(--green);
+  }
+
+  footer {
+    padding: 3rem 1.5rem 4rem;
+    text-align: center;
+    color: var(--dim);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(22px);
+    transition: opacity 0.55s ease, transform 0.55s ease;
+  }
+
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  @media (max-width: 780px) {
+    .hero { min-height: auto; padding-top: 5rem; }
+    .grid,
+    .grid.three,
+    .path-compare,
+    .stats {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="eyebrow">PR #1466 / Storage Redesign / Merge Case</div>
+  <h1>Make AO storage match how AO actually works.</h1>
+  <p class="hero-copy">
+    Agent Orchestrator is project-centered. The current storage layer is hash-centered.
+    PR #1466 removes that mismatch, replaces fragile string metadata with JSON, and gives
+    users a deliberate migration path.
+  </p>
+  <div class="meta">
+    <div class="pill"><strong>Branch</strong> storage-redesign</div>
+    <div class="pill"><strong>Status</strong> mergeable</div>
+    <div class="pill"><strong>Diff</strong> +5,014 / -1,786</div>
+    <div class="pill"><strong>Tests</strong> 869 passing</div>
+    <div class="pill"><strong>Focus</strong> migration safety</div>
+  </div>
+</header>
+
+<main>
+  <section class="reveal">
+    <span class="section-label">01 / The argument</span>
+    <h2>This is not a cosmetic refactor. It removes a foundational inconsistency.</h2>
+    <div class="thesis">
+      <p>Users, the dashboard, and commands identify work by project. The filesystem should too.</p>
+    </div>
+    <p>
+      Today AO stores project state under generated hash directories and keeps a
+      <code>storageKey</code> indirection alive so the rest of the system can find it. That
+      indirection leaks into core, CLI, web, recovery, config, and tests.
+    </p>
+    <p>
+      PR #1466 changes the storage model to the same unit the product already exposes:
+      <code>projectId</code>. It also moves session metadata to JSON so lifecycle state, runtime
+      handles, agent reports, and dashboard data are represented as structured data instead of
+      encoded strings.
+    </p>
+
+    <div class="stats">
+      <div class="stat"><div class="stat-value">1</div><div class="stat-label">Storage Model</div></div>
+      <div class="stat"><div class="stat-value">0</div><div class="stat-label">Runtime storageKey</div></div>
+      <div class="stat"><div class="stat-value">44</div><div class="stat-label">Migration Tests</div></div>
+      <div class="stat"><div class="stat-value">77</div><div class="stat-label">Files Updated</div></div>
+      <div class="stat"><div class="stat-value">869</div><div class="stat-label">Tests Passing</div></div>
+    </div>
+  </section>
+
+  <section class="reveal">
+    <span class="section-label">02 / Before and after</span>
+    <h2>The design becomes obvious on disk.</h2>
+    <div class="path-compare">
+      <div class="path-box">
+        <div class="path-label">Before</div>
+        <pre>~/.agent-orchestrator/{hash}-{project}/sessions/{sessionId}
+~/.agent-orchestrator/{hash}-{project}/worktrees/
+metadata: key=value strings
+config: storageKey required</pre>
+      </div>
+      <div class="path-box after">
+        <div class="path-label">After</div>
+        <pre>~/.agent-orchestrator/projects/{projectId}/sessions/{sessionId}.json
+~/.agent-orchestrator/projects/{projectId}/worktrees/
+metadata: typed JSON
+config: projectId is enough</pre>
+      </div>
+    </div>
+
+    <table class="table">
+      <tr><th>Area</th><th>Old Model</th><th>New Model</th></tr>
+      <tr>
+        <td>Project identity</td>
+        <td>Generated hash and <code>storageKey</code>.</td>
+        <td>Direct <code>projectId</code>.</td>
+      </tr>
+      <tr>
+        <td>Session metadata</td>
+        <td>Flat string records with ad hoc parsing.</td>
+        <td>JSON files with typed structured fields.</td>
+      </tr>
+      <tr>
+        <td>Project deletion</td>
+        <td>Needs storage identity resolution.</td>
+        <td>Deletes <code>projects/{projectId}</code>.</td>
+      </tr>
+      <tr>
+        <td>Debugging</td>
+        <td>Requires knowing generated directory names and string encodings.</td>
+        <td>Open a project folder and inspect JSON.</td>
+      </tr>
+      <tr>
+        <td>Migration</td>
+        <td>No clear boundary.</td>
+        <td><code>ao migrate-storage</code>, dry-run, rollback, active-session checks.</td>
+      </tr>
+    </table>
+  </section>
+
+  <section class="reveal">
+    <span class="section-label">03 / Why now</span>
+    <h2>The old abstraction is becoming a tax on every feature.</h2>
+    <div class="grid">
+      <div class="card warn">
+        <span class="tag amber">Product cost</span>
+        <h3>Projects do not own their own storage</h3>
+        <p>
+          AO presents projects as the main unit, but storage still uses generated identities.
+          That makes lookup, deletion, restoration, and recovery more complex than the product
+          model requires.
+        </p>
+      </div>
+      <div class="card warn">
+        <span class="tag amber">Engineering cost</span>
+        <h3>Structured state is squeezed into strings</h3>
+        <p>
+          Lifecycle state, runtime handles, dashboard state, and agent reports are object-shaped.
+          Keeping them in key=value files creates parsing bridges and ambiguous values like
+          <code>"off"</code> versus <code>"false"</code>.
+        </p>
+      </div>
+      <div class="card warn">
+        <span class="tag amber">Migration cost</span>
+        <h3>Waiting makes this harder</h3>
+        <p>
+          More sessions, plugins, metadata fields, and project flows all increase the eventual
+          migration surface. This PR pays the cost once with an explicit upgrade path.
+        </p>
+      </div>
+      <div class="card warn">
+        <span class="tag amber">Review cost</span>
+        <h3>Future storage changes get simpler</h3>
+        <p>
+          Reviewers no longer need to trace storageKey generation, origin files, collision
+          handling, and flat metadata conversion just to reason about session behavior.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="reveal">
+    <span class="section-label">04 / Risk control</span>
+    <h2>The risky part is migration. The PR treats migration as the product.</h2>
+    <p>
+      The branch went through several review rounds focused on the failure modes that matter:
+      rollback, moved worktrees, corrupt metadata, active tmux sessions, archive collisions,
+      cross-device moves, and interrupted migration state.
+    </p>
+
+    <div class="grid three">
+      <div class="card good">
+        <span class="tag green">Fixed</span>
+        <h3>Rollback data loss</h3>
+        <p>
+          Rollback checks for post-migration sessions and preserves V2 project data instead of
+          recursively deleting it.
+        </p>
+      </div>
+      <div class="card good">
+        <span class="tag green">Fixed</span>
+        <h3>Moved worktrees</h3>
+        <p>
+          Migration repairs git worktree references after moving worktrees, including nested stray
+          worktrees.
+        </p>
+      </div>
+      <div class="card good">
+        <span class="tag green">Fixed</span>
+        <h3>Interrupted migration</h3>
+        <p>
+          Crash-safety markers and idempotency checks prevent reruns from treating partial state
+          as a clean migration.
+        </p>
+      </div>
+      <div class="card good">
+        <span class="tag green">Fixed</span>
+        <h3>Corrupt metadata</h3>
+        <p>
+          Bad JSON no longer takes down session listing or dashboard reads.
+        </p>
+      </div>
+      <div class="card good">
+        <span class="tag green">Fixed</span>
+        <h3>False active-session blocks</h3>
+        <p>
+          Tmux detection is scoped to known project prefixes instead of broad matching unrelated
+          sessions.
+        </p>
+      </div>
+      <div class="card good">
+        <span class="tag green">Fixed</span>
+        <h3>Archive collisions</h3>
+        <p>
+          Archive filenames include enough uniqueness to avoid concurrent overwrite cases.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="reveal">
+    <span class="section-label">05 / Reviewer guidance</span>
+    <h2>Review the migration boundary, not every mechanical path replacement.</h2>
+    <p>
+      The core design is intentionally straightforward. The important review question is whether
+      users can move from V1 storage to V2 storage without losing sessions, worktrees, archives,
+      or project config.
+    </p>
+
+    <table class="table">
+      <tr><th>File</th><th>Why it matters</th></tr>
+      <tr>
+        <td><code>packages/core/src/migration/storage-v2.ts</code></td>
+        <td>Migration, rollback, worktree moves, active-session detection, crash recovery.</td>
+      </tr>
+      <tr>
+        <td><code>packages/core/src/metadata.ts</code></td>
+        <td>JSON metadata read/write, corrupt file handling, archive behavior, compatibility flattening.</td>
+      </tr>
+      <tr>
+        <td><code>packages/core/src/paths.ts</code></td>
+        <td>New projectId path contract and project ID safety rules.</td>
+      </tr>
+      <tr>
+        <td><code>packages/core/src/session-manager.ts</code></td>
+        <td>Main consumer of the new path and metadata model.</td>
+      </tr>
+      <tr>
+        <td><code>packages/cli/src/commands/migrate-storage.ts</code></td>
+        <td>User-facing migration and rollback entrypoint.</td>
+      </tr>
+    </table>
+
+    <ul class="checklist">
+      <li><code>ao migrate-storage --dry-run</code> previews without writing.</li>
+      <li><code>ao migrate-storage</code> converts legacy hash dirs to <code>projects/{projectId}</code>.</li>
+      <li><code>ao migrate-storage --rollback</code> restores legacy dirs and preserves post-migration sessions.</li>
+      <li>Existing sessions load in dashboard from <code>.json</code> metadata.</li>
+      <li>Moved worktrees still support normal git operations after migration.</li>
+    </ul>
+  </section>
+
+  <section class="reveal">
+    <span class="section-label">06 / Recommendation</span>
+    <h2>Merge this so future AO work does not build on the wrong storage abstraction.</h2>
+    <p>
+      The alternative is to keep teaching every new feature about <code>storageKey</code>,
+      hash directories, flat metadata, and legacy collision behavior. That is not cheaper;
+      it spreads the migration cost across future PRs.
+    </p>
+    <p>
+      PR #1466 pays that cost once, with a visible migration command and the safety checks
+      expected for production user data.
+    </p>
+  </section>
+</main>
+
+<footer>
+  PR <a href="https://github.com/ComposioHQ/agent-orchestrator/pull/1466">#1466</a>
+  &middot; ComposioHQ/agent-orchestrator
+  &middot; storage-redesign
+  &middot; April 2026
+</footer>
+
+<script>
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry, index) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => entry.target.classList.add('visible'), index * 70);
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  reveals.forEach((el) => observer.observe(el));
+</script>
+
+</body>
+</html>
