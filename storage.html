@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Why PR #1466 Matters</title>
+<title>PR #1466 — Storage Redesign Review Guide</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -369,13 +369,170 @@
     transform: translateY(0);
   }
 
+  .loc-bar {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.6rem;
+    margin-top: 2rem;
+  }
+
+  .loc-row {
+    display: grid;
+    grid-template-columns: 10rem 1fr 7.5rem;
+    align-items: center;
+    gap: 1rem;
+    font-size: 0.85rem;
+  }
+
+  .loc-row-label {
+    color: var(--text);
+    font-weight: 600;
+    font-size: 0.82rem;
+  }
+
+  .loc-bar-track {
+    height: 8px;
+    background: var(--surface-2);
+    border-radius: 999px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .loc-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    display: flex;
+  }
+
+  .loc-bar-add {
+    background: var(--green);
+    height: 100%;
+  }
+
+  .loc-bar-del {
+    background: var(--red);
+    opacity: 0.65;
+    height: 100%;
+  }
+
+  .loc-row-nums {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .loc-row-nums .add { color: var(--green); }
+  .loc-row-nums .del { color: var(--red); }
+
+  .badge-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 1.2rem 0;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 0.55rem 0.85rem;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--muted);
+  }
+
+  .badge strong { color: var(--text); font-weight: 600; }
+
+  .timeline {
+    position: relative;
+    padding-left: 2rem;
+    margin-top: 2rem;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 0.35rem;
+    top: 0.3rem;
+    bottom: 0.3rem;
+    width: 2px;
+    background: var(--border);
+  }
+
+  .timeline-item {
+    position: relative;
+    margin-bottom: 1.5rem;
+  }
+
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -1.65rem;
+    top: 0.55rem;
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--green);
+    border: 2px solid var(--bg);
+  }
+
+  .timeline-phase {
+    color: var(--green);
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.25rem;
+  }
+
+  .timeline-desc {
+    color: var(--muted);
+    font-size: 0.88rem;
+    margin: 0;
+  }
+
+  .note-box {
+    border-left: 3px solid var(--blue);
+    background: linear-gradient(90deg, var(--blue-soft), transparent);
+    padding: 1.2rem 1.5rem;
+    margin: 2rem 0;
+    border-radius: 0 10px 10px 0;
+  }
+
+  .note-box p {
+    color: var(--text);
+    font-size: 0.92rem;
+    margin: 0;
+  }
+
+  .split-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+
   @media (max-width: 780px) {
     .hero { min-height: auto; padding-top: 5rem; }
     .grid,
     .grid.three,
     .path-compare,
+    .split-grid,
     .stats {
       grid-template-columns: 1fr;
+    }
+    .loc-row {
+      grid-template-columns: 1fr;
+      gap: 0.3rem;
+    }
+    .loc-row-nums {
+      text-align: left;
     }
   }
 </style>
@@ -392,10 +549,11 @@
   </p>
   <div class="meta">
     <div class="pill"><strong>Branch</strong> storage-redesign</div>
-    <div class="pill"><strong>Status</strong> mergeable</div>
-    <div class="pill"><strong>Diff</strong> +5,014 / -1,786</div>
-    <div class="pill"><strong>Tests</strong> 869 passing</div>
-    <div class="pill"><strong>Focus</strong> migration safety</div>
+    <div class="pill"><strong>Diff</strong> +6,014 / -2,177</div>
+    <div class="pill"><strong>Files</strong> 80 changed</div>
+    <div class="pill"><strong>Commits</strong> 50</div>
+    <div class="pill"><strong>Test files</strong> 40</div>
+    <div class="pill"><strong>Review rounds</strong> 11</div>
   </div>
 </header>
 
@@ -421,9 +579,9 @@
     <div class="stats">
       <div class="stat"><div class="stat-value">1</div><div class="stat-label">Storage Model</div></div>
       <div class="stat"><div class="stat-value">0</div><div class="stat-label">Runtime storageKey</div></div>
-      <div class="stat"><div class="stat-value">44</div><div class="stat-label">Migration Tests</div></div>
-      <div class="stat"><div class="stat-value">77</div><div class="stat-label">Files Updated</div></div>
-      <div class="stat"><div class="stat-value">869</div><div class="stat-label">Tests Passing</div></div>
+      <div class="stat"><div class="stat-value">54</div><div class="stat-label">Migration Tests</div></div>
+      <div class="stat"><div class="stat-value">80</div><div class="stat-label">Files Changed</div></div>
+      <div class="stat"><div class="stat-value">11</div><div class="stat-label">Review Rounds</div></div>
     </div>
   </section>
 
@@ -436,14 +594,16 @@
         <pre>~/.agent-orchestrator/{hash}-{project}/sessions/{sessionId}
 ~/.agent-orchestrator/{hash}-{project}/worktrees/
 metadata: key=value strings
-config: storageKey required</pre>
+config: storageKey required
+identity: sha256(configDir).slice(0,12)</pre>
       </div>
       <div class="path-box after">
         <div class="path-label">After</div>
         <pre>~/.agent-orchestrator/projects/{projectId}/sessions/{sessionId}.json
 ~/.agent-orchestrator/projects/{projectId}/worktrees/
 metadata: typed JSON
-config: projectId is enough</pre>
+config: projectId is enough
+identity: basename_sha256(path+origin).slice(0,10)</pre>
       </div>
     </div>
 
@@ -451,41 +611,163 @@ config: projectId is enough</pre>
       <tr><th>Area</th><th>Old Model</th><th>New Model</th></tr>
       <tr>
         <td>Project identity</td>
-        <td>Generated hash and <code>storageKey</code>.</td>
-        <td>Direct <code>projectId</code>.</td>
+        <td>Generated 12-hex hash + <code>storageKey</code> indirection.</td>
+        <td>Single canonical <code>projectId</code> (<code>basename_hash10</code>).</td>
       </tr>
       <tr>
         <td>Session metadata</td>
-        <td>Flat string records with ad hoc parsing.</td>
+        <td>Flat <code>key=value</code> strings with ad hoc parsing.</td>
         <td>JSON files with typed structured fields.</td>
       </tr>
       <tr>
+        <td>Metadata hooks</td>
+        <td>Shell wrappers write <code>key=value</code>; jq not required.</td>
+        <td>Shell wrappers write JSON with jq, fallback to sed when jq unavailable.</td>
+      </tr>
+      <tr>
         <td>Project deletion</td>
-        <td>Needs storage identity resolution.</td>
-        <td>Deletes <code>projects/{projectId}</code>.</td>
+        <td>Resolve hash identity, then delete.</td>
+        <td>Delete <code>projects/{projectId}</code> directly.</td>
       </tr>
       <tr>
         <td>Debugging</td>
-        <td>Requires knowing generated directory names and string encodings.</td>
-        <td>Open a project folder and inspect JSON.</td>
+        <td>Need generated hash + flat string encodings.</td>
+        <td>Open a project folder, read JSON.</td>
+      </tr>
+      <tr>
+        <td>Project registration</td>
+        <td>Per-config registry, implicit.</td>
+        <td>Global config registry with collision detection, 409 responses.</td>
       </tr>
       <tr>
         <td>Migration</td>
         <td>No clear boundary.</td>
-        <td><code>ao migrate-storage</code>, dry-run, rollback, active-session checks.</td>
+        <td><code>ao migrate-storage</code> with dry-run, rollback, partial-failure safety.</td>
       </tr>
     </table>
   </section>
 
   <section class="reveal">
-    <span class="section-label">03 / Why now</span>
+    <span class="section-label">03 / LOC breakdown</span>
+    <h2>Where the lines actually go.</h2>
+    <p>
+      80 files, but not all files are equal. Most changes are mechanical (path replacements, test updates).
+      The core logic that needs careful review is concentrated in a few files.
+    </p>
+
+    <div class="loc-bar">
+      <div class="loc-row">
+        <span class="loc-row-label">core (49 files)</span>
+        <div class="loc-bar-track">
+          <div class="loc-bar-fill" style="width: 100%;">
+            <div class="loc-bar-add" style="width: 75%;"></div>
+            <div class="loc-bar-del" style="width: 25%;"></div>
+          </div>
+        </div>
+        <span class="loc-row-nums"><span class="add">+4,531</span> / <span class="del">-1,535</span></span>
+      </div>
+      <div class="loc-row">
+        <span class="loc-row-label">cli (10 files)</span>
+        <div class="loc-bar-track">
+          <div class="loc-bar-fill" style="width: 14%;">
+            <div class="loc-bar-add" style="width: 67%;"></div>
+            <div class="loc-bar-del" style="width: 33%;"></div>
+          </div>
+        </div>
+        <span class="loc-row-nums"><span class="add">+575</span> / <span class="del">-286</span></span>
+      </div>
+      <div class="loc-row">
+        <span class="loc-row-label">web (15 files)</span>
+        <div class="loc-bar-track">
+          <div class="loc-bar-fill" style="width: 7%;">
+            <div class="loc-bar-add" style="width: 62%;"></div>
+            <div class="loc-bar-del" style="width: 38%;"></div>
+          </div>
+        </div>
+        <span class="loc-row-nums"><span class="add">+270</span> / <span class="del">-167</span></span>
+      </div>
+      <div class="loc-row">
+        <span class="loc-row-label">plugins (1 file)</span>
+        <div class="loc-bar-track">
+          <div class="loc-bar-fill" style="width: 1%;">
+            <div class="loc-bar-add" style="width: 65%;"></div>
+            <div class="loc-bar-del" style="width: 35%;"></div>
+          </div>
+        </div>
+        <span class="loc-row-nums"><span class="add">+42</span> / <span class="del">-23</span></span>
+      </div>
+      <div class="loc-row">
+        <span class="loc-row-label">root (2 files)</span>
+        <div class="loc-bar-track">
+          <div class="loc-bar-fill" style="width: 7%;">
+            <div class="loc-bar-add" style="width: 100%;"></div>
+          </div>
+        </div>
+        <span class="loc-row-nums"><span class="add">+406</span></span>
+      </div>
+    </div>
+
+    <h3 style="margin-top: 2.5rem; margin-bottom: 0.5rem;">Core subsystem detail</h3>
+    <p>The core package contains the highest-impact changes. Here is the breakdown by subsystem:</p>
+
+    <table class="table">
+      <tr><th>Subsystem</th><th>Change</th><th>Nature</th></tr>
+      <tr>
+        <td><code>migration/storage-v2.ts</code></td>
+        <td><span class="add" style="color: var(--green);">+1,360</span> (new file)</td>
+        <td>Core migration logic. Primary review target.</td>
+      </tr>
+      <tr>
+        <td><code>global-config.ts</code></td>
+        <td><span class="add" style="color: var(--green);">+137</span> / <span class="del" style="color: var(--red);">-321</span></td>
+        <td>Global registry, collision detection, project registration.</td>
+      </tr>
+      <tr>
+        <td><code>paths.ts</code></td>
+        <td><span class="add" style="color: var(--green);">+127</span> / <span class="del" style="color: var(--red);">-17</span></td>
+        <td>V2 path functions, <code>assertSafeProjectId</code>, <code>parseTmuxNameV2</code>.</td>
+      </tr>
+      <tr>
+        <td><code>session-manager.ts</code></td>
+        <td><span class="add" style="color: var(--green);">+101</span> / <span class="del" style="color: var(--red);">-97</span></td>
+        <td>Wired to new paths and JSON metadata model.</td>
+      </tr>
+      <tr>
+        <td><code>agent-workspace-hooks.ts</code></td>
+        <td><span class="add" style="color: var(--green);">+35</span> / <span class="del" style="color: var(--red);">-11</span></td>
+        <td>Shell wrapper hooks updated for JSON metadata format.</td>
+      </tr>
+      <tr>
+        <td><code>types.ts</code></td>
+        <td><span class="add" style="color: var(--green);">+18</span> / <span class="del" style="color: var(--red);">-39</span></td>
+        <td>SessionMetadata type restructured for JSON.</td>
+      </tr>
+      <tr>
+        <td><code>__tests__/ (26 files)</code></td>
+        <td><span class="add" style="color: var(--green);">+2,275</span> / <span class="del" style="color: var(--red);">-664</span></td>
+        <td>Comprehensive test coverage including 54 migration tests.</td>
+      </tr>
+    </table>
+
+    <div class="note-box">
+      <p>
+        About half of the core package diff is test code (+2,275 in tests). Of the remaining
+        production code, the migration engine is the largest single file (+1,360). The core design
+        decisions live in <code>storage-v2.ts</code>, <code>global-config.ts</code>,
+        <code>paths.ts</code>, and <code>session-manager.ts</code>.
+      </p>
+    </div>
+  </section>
+
+  <section class="reveal">
+    <span class="section-label">04 / Why now</span>
     <h2>The old abstraction is becoming a tax on every feature.</h2>
     <div class="grid">
       <div class="card warn">
         <span class="tag amber">Product cost</span>
         <h3>Projects do not own their own storage</h3>
         <p>
-          AO presents projects as the main unit, but storage still uses generated identities.
+          AO presents projects as the main unit, but storage still uses generated hash identities.
           That makes lookup, deletion, restoration, and recovery more complex than the product
           model requires.
         </p>
@@ -519,12 +801,55 @@ config: projectId is enough</pre>
   </section>
 
   <section class="reveal">
-    <span class="section-label">04 / Risk control</span>
+    <span class="section-label">05 / The three design pillars</span>
+    <h2>Hashed identity, JSON metadata, safe migration.</h2>
+
+    <div class="grid three">
+      <div class="card">
+        <span class="tag blue">Identity</span>
+        <h3>One canonical project ID</h3>
+        <p>
+          <code>generateExternalId(path, originUrl)</code> produces
+          <code>basename_sha256hash10</code>. This single ID is used everywhere: storage paths,
+          tmux session names, global registry, CLI, and dashboard. No more internal/external
+          ID distinction.
+        </p>
+      </div>
+      <div class="card">
+        <span class="tag blue">Metadata</span>
+        <h3>JSON replaces key=value</h3>
+        <p>
+          Session files are <code>.json</code> with typed fields. Shell hooks (both PATH wrappers
+          and Claude Code PostToolUse hooks) write JSON natively, with a sed-based fallback when
+          jq is unavailable.
+        </p>
+      </div>
+      <div class="card">
+        <span class="tag blue">Migration</span>
+        <h3>Explicit upgrade path</h3>
+        <p>
+          <code>ao migrate-storage</code> converts hash-based dirs to <code>projects/{projectId}</code>,
+          rewrites worktree references, converts metadata to JSON, and sanitizes unsafe legacy IDs.
+          Dry-run and rollback are first-class.
+        </p>
+      </div>
+    </div>
+
+    <h3 style="margin-top: 2.5rem; margin-bottom: 0.5rem;">Project ID safety</h3>
+    <p>
+      <code>assertSafeProjectId</code> validates all project IDs at the path boundary:
+      must match <code>/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/</code>, length 1-128, no path traversal.
+      Legacy IDs that don't match are sanitized during migration via <code>sanitizeLegacyProjectId</code>.
+    </p>
+  </section>
+
+  <section class="reveal">
+    <span class="section-label">06 / Risk control</span>
     <h2>The risky part is migration. The PR treats migration as the product.</h2>
     <p>
-      The branch went through several review rounds focused on the failure modes that matter:
+      The branch went through 11 review rounds focused on the failure modes that matter:
       rollback, moved worktrees, corrupt metadata, active tmux sessions, archive collisions,
-      cross-device moves, and interrupted migration state.
+      cross-device moves, partial failures, and interrupted migration state.
     </p>
 
     <div class="grid three">
@@ -538,25 +863,42 @@ config: projectId is enough</pre>
       </div>
       <div class="card good">
         <span class="tag green">Fixed</span>
-        <h3>Moved worktrees</h3>
+        <h3>Moved worktree paths</h3>
         <p>
-          Migration repairs git worktree references after moving worktrees, including nested stray
-          worktrees.
+          Migration moves worktrees, then patches session JSON to point at the new location.
+          Previously the metadata still referenced the old path.
         </p>
       </div>
       <div class="card good">
         <span class="tag green">Fixed</span>
-        <h3>Interrupted migration</h3>
+        <h3>Partial failure safety</h3>
         <p>
-          Crash-safety markers and idempotency checks prevent reruns from treating partial state
-          as a clean migration.
+          If some projects fail migration, config is not stripped and the migration marker is not
+          removed. Only a fully clean run completes the migration.
         </p>
       </div>
       <div class="card good">
         <span class="tag green">Fixed</span>
         <h3>Corrupt metadata</h3>
         <p>
-          Bad JSON no longer takes down session listing or dashboard reads.
+          Bad JSON no longer takes down session listing or dashboard reads. Atomic write-and-rename
+          prevents partial writes.
+        </p>
+      </div>
+      <div class="card good">
+        <span class="tag green">Fixed</span>
+        <h3>Unsafe legacy project IDs</h3>
+        <p>
+          Legacy project IDs with spaces, special chars, or path traversal are sanitized via
+          <code>sanitizeLegacyProjectId</code> during migration.
+        </p>
+      </div>
+      <div class="card good">
+        <span class="tag green">Fixed</span>
+        <h3>jq-unavailable JSON corruption</h3>
+        <p>
+          When jq is not installed, shell hooks now use sed-based JSON updates instead of
+          falling back to key=value format that corrupts JSON files.
         </p>
       </div>
       <div class="card good">
@@ -564,63 +906,300 @@ config: projectId is enough</pre>
         <h3>False active-session blocks</h3>
         <p>
           Tmux detection is scoped to known project prefixes instead of broad matching unrelated
-          sessions.
+          sessions. Dry-run skips active checks entirely.
         </p>
       </div>
       <div class="card good">
         <span class="tag green">Fixed</span>
         <h3>Archive collisions</h3>
         <p>
-          Archive filenames include enough uniqueness to avoid concurrent overwrite cases.
+          Archive filenames include compact timestamps and PID suffixes to avoid concurrent
+          overwrite cases.
+        </p>
+      </div>
+      <div class="card good">
+        <span class="tag green">Fixed</span>
+        <h3>Project collision in web UI</h3>
+        <p>
+          POST <code>/api/projects</code> returns structured 409 with collision info. The
+          AddProjectModal shows existing project, suggested ID, and resolution options.
         </p>
       </div>
     </div>
   </section>
 
   <section class="reveal">
-    <span class="section-label">05 / Reviewer guidance</span>
-    <h2>Review the migration boundary, not every mechanical path replacement.</h2>
+    <span class="section-label">07 / Review history</span>
+    <h2>11 review rounds shaped this PR.</h2>
     <p>
-      The core design is intentionally straightforward. The important review question is whether
-      users can move from V1 storage to V2 storage without losing sessions, worktrees, archives,
-      or project config.
+      This is not a one-shot branch. The migration logic was iterated across multiple review cycles,
+      each catching real edge cases that would have hit production users.
     </p>
 
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="timeline-phase">Phase 1 — Core refactor</div>
+        <p class="timeline-desc">JSON metadata format, V2 path functions, storageKey removal, session manager wiring.</p>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-phase">Phase 2 — Migration engine</div>
+        <p class="timeline-desc">Inventory, dry-run, worktree moves, metadata conversion, active-session detection.</p>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-phase">Review round 1</div>
+        <p class="timeline-desc">Worktree path rewriting, archive location fixes, recovery log improvements.</p>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-phase">Review round 2</div>
+        <p class="timeline-desc">Rollback data-loss fix, stray worktree recursion, JSON parse whitelist.</p>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-phase">Review round 3</div>
+        <p class="timeline-desc">Crash safety, atomic ops, corrupt data handling, 8 edge case hardening (EC-1 through EC-8).</p>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-phase">Review round 4</div>
+        <p class="timeline-desc">V1 detection, git worktree repair, storageKey preservation for downgrade safety.</p>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-phase">Review round 5</div>
+        <p class="timeline-desc">Zod schema gaps, worktree repair, rollback safety, status priority alignment.</p>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-phase">Hashed identity</div>
+        <p class="timeline-desc">Single canonical project ID via <code>generateExternalId</code>. Collision detection in global config.</p>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-phase">Review round 6 (final)</div>
+        <p class="timeline-desc">7 findings fixed: worktree metadata patching, partial-failure safety, legacy ID sanitization, jq-unavailable JSON corruption, CLI effective-ID return, web route safety, config repair fallback.</p>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-phase">Copilot review</div>
+        <p class="timeline-desc">3 fixes: parseTmuxNameV2 digit-prefix regex, DELETE route unsafe-ID guard, POST route 409 collision response.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="reveal">
+    <span class="section-label">08 / Reviewer guide</span>
+    <h2>How to review this efficiently.</h2>
+    <p>
+      This is a large PR. Not all 80 files need equal attention. Most changes are mechanical
+      (path replacements, test updates). Focus review time on the design decisions below.
+    </p>
+
+    <h3 style="margin-top: 2rem; margin-bottom: 1rem;">Priority 1: Migration safety (read carefully)</h3>
     <table class="table">
-      <tr><th>File</th><th>Why it matters</th></tr>
+      <tr><th>File</th><th>Lines</th><th>What to check</th></tr>
       <tr>
-        <td><code>packages/core/src/migration/storage-v2.ts</code></td>
-        <td>Migration, rollback, worktree moves, active-session detection, crash recovery.</td>
+        <td><code>core/src/migration/storage-v2.ts</code></td>
+        <td>+1,360</td>
+        <td>The migration engine. Inventory, move logic, worktree repair, rollback, partial failure handling, legacy ID sanitization. This is the highest-risk file.</td>
       </tr>
       <tr>
-        <td><code>packages/core/src/metadata.ts</code></td>
-        <td>JSON metadata read/write, corrupt file handling, archive behavior, compatibility flattening.</td>
+        <td><code>core/src/global-config.ts</code></td>
+        <td>+137/-321</td>
+        <td>Global registry, collision detection, <code>registerProjectInGlobalConfig</code>. How duplicate project IDs are handled.</td>
       </tr>
       <tr>
-        <td><code>packages/core/src/paths.ts</code></td>
-        <td>New projectId path contract and project ID safety rules.</td>
-      </tr>
-      <tr>
-        <td><code>packages/core/src/session-manager.ts</code></td>
-        <td>Main consumer of the new path and metadata model.</td>
-      </tr>
-      <tr>
-        <td><code>packages/cli/src/commands/migrate-storage.ts</code></td>
-        <td>User-facing migration and rollback entrypoint.</td>
+        <td><code>core/src/paths.ts</code></td>
+        <td>+127/-17</td>
+        <td><code>assertSafeProjectId</code> validation, V2 path functions. Security boundary for project ID input.</td>
       </tr>
     </table>
+
+    <h3 style="margin-top: 2rem; margin-bottom: 1rem;">Priority 2: Metadata format (scan for correctness)</h3>
+    <table class="table">
+      <tr><th>File</th><th>Lines</th><th>What to check</th></tr>
+      <tr>
+        <td><code>core/src/agent-workspace-hooks.ts</code></td>
+        <td>+35/-11</td>
+        <td>Shell wrapper hooks. JSON write logic and the sed-based fallback when jq unavailable.</td>
+      </tr>
+      <tr>
+        <td><code>plugins/agent-claude-code/src/index.ts</code></td>
+        <td>+42/-23</td>
+        <td>PostToolUse hook template literal. Same JSON/sed pattern as workspace hooks.</td>
+      </tr>
+      <tr>
+        <td><code>core/src/session-manager.ts</code></td>
+        <td>+101/-97</td>
+        <td>Main consumer of new paths and JSON metadata. Session CRUD operations.</td>
+      </tr>
+    </table>
+
+    <h3 style="margin-top: 2rem; margin-bottom: 1rem;">Priority 3: Mechanical changes (skim or skip)</h3>
+    <table class="table">
+      <tr><th>Category</th><th>Files</th><th>Nature</th></tr>
+      <tr>
+        <td>Web</td>
+        <td>15 files</td>
+        <td>Replace <code>storageKey</code> with <code>projectId</code> in components, API routes, tests.</td>
+      </tr>
+      <tr>
+        <td>CLI</td>
+        <td>10 files</td>
+        <td>Use <code>projectId</code> instead of <code>storageKey</code>. New <code>migrate-storage</code> command.</td>
+      </tr>
+      <tr>
+        <td>Plugins</td>
+        <td>1 file</td>
+        <td>agent-claude-code PostToolUse hook template updated for JSON.</td>
+      </tr>
+      <tr>
+        <td>Test updates</td>
+        <td>40 files</td>
+        <td>Updated fixtures, path expectations, new migration test suite (54 tests).</td>
+      </tr>
+    </table>
+
+    <div class="note-box">
+      <p>
+        <strong>Suggested review order:</strong> Start with <code>paths.ts</code> (understand the new path contract),
+        then <code>storage-v2.ts</code> (migration logic), then <code>global-config.ts</code> (registration),
+        then <code>agent-workspace-hooks.ts</code> (shell hooks). Everything else follows from these four files.
+      </p>
+    </div>
+  </section>
+
+  <section class="reveal">
+    <span class="section-label">09 / Testing</span>
+    <h2>40 test files. 54 migration-specific tests.</h2>
+    <p>
+      The migration is the riskiest part of this PR, so it has the deepest test coverage.
+      The migration test suite covers every failure mode that was found during review.
+    </p>
+
+    <div class="split-grid">
+      <div class="card">
+        <span class="tag blue">Migration tests (54)</span>
+        <h3>storage-v2.ts coverage</h3>
+        <p>
+          Inventory detection, dry-run fidelity, worktree moves and git repair,
+          metadata JSON conversion, archive timestamp formats, rollback preservation,
+          crash recovery, partial failure, legacy ID sanitization, active-session blocking,
+          <code>.migrated</code> marker semantics.
+        </p>
+      </div>
+      <div class="card">
+        <span class="tag blue">Core tests (26 files)</span>
+        <h3>+2,275 / -664</h3>
+        <p>
+          Session manager spawn/restore/archive, paths and project ID validation,
+          metadata read/write/corrupt handling, lifecycle state machine, config validation,
+          agent workspace hooks, global config registry.
+        </p>
+      </div>
+      <div class="card">
+        <span class="tag blue">Web tests (5 files)</span>
+        <h3>+193 / -110</h3>
+        <p>
+          API route tests (projects CRUD, session routes), component tests (Dashboard, SessionCard),
+          serialization tests, project detail route with degraded config handling.
+        </p>
+      </div>
+      <div class="card">
+        <span class="tag blue">CLI tests</span>
+        <h3>Part of 10 CLI files</h3>
+        <p>
+          CLI command tests (start, spawn, status, migrate-storage, completion).
+          Plugin test changes are minimal (1 file).
+        </p>
+      </div>
+    </div>
 
     <ul class="checklist">
       <li><code>ao migrate-storage --dry-run</code> previews without writing.</li>
       <li><code>ao migrate-storage</code> converts legacy hash dirs to <code>projects/{projectId}</code>.</li>
       <li><code>ao migrate-storage --rollback</code> restores legacy dirs and preserves post-migration sessions.</li>
-      <li>Existing sessions load in dashboard from <code>.json</code> metadata.</li>
-      <li>Moved worktrees still support normal git operations after migration.</li>
+      <li>Partial migration failure leaves config and marker intact for re-run.</li>
+      <li>Moved worktrees have metadata patched to point at new location.</li>
+      <li>Unsafe legacy project IDs are sanitized during migration.</li>
+      <li>Shell hooks write valid JSON even without jq installed.</li>
+      <li>Project collision returns structured 409 with resolution options.</li>
+      <li>DELETE route handles unsafe project IDs gracefully (400, not crash).</li>
     </ul>
   </section>
 
   <section class="reveal">
-    <span class="section-label">06 / Recommendation</span>
+    <span class="section-label">10 / What changed from review</span>
+    <h2>Issues found and fixed during review.</h2>
+    <p>
+      These are the concrete issues caught during the review process. Each was fixed, tested,
+      and pushed before this guide was written.
+    </p>
+
+    <div class="grid">
+      <div class="card good">
+        <span class="tag green">Review finding</span>
+        <h3>Worktree metadata not patched after move</h3>
+        <p>
+          <code>tryMoveWorktree()</code> moved the directory but left session JSON pointing at
+          the old path. Now patches <code>worktree</code> field in the JSON after moving.
+        </p>
+      </div>
+      <div class="card good">
+        <span class="tag green">Review finding</span>
+        <h3>Partial migration stripped config</h3>
+        <p>
+          If 3 of 5 projects migrated and 2 failed, config was still stripped and the migration
+          marker removed. Now both are guarded by <code>projectErrors.length === 0</code>.
+        </p>
+      </div>
+      <div class="card good">
+        <span class="tag green">Review finding</span>
+        <h3>Legacy IDs with special chars crash paths</h3>
+        <p>
+          Project IDs from legacy data could contain spaces, colons, or shell-unsafe characters.
+          <code>sanitizeLegacyProjectId()</code> normalizes these during migration.
+        </p>
+      </div>
+      <div class="card good">
+        <span class="tag green">Review finding</span>
+        <h3>jq-unavailable corrupts JSON</h3>
+        <p>
+          Shell hooks fell back to writing <code>key=value</code> into JSON files when jq was
+          missing. Now uses sed-based JSON update preserving the file format.
+        </p>
+      </div>
+      <div class="card good">
+        <span class="tag green">Review finding</span>
+        <h3>CLI didn't return effective project ID</h3>
+        <p>
+          <code>registerProject</code> returned <code>void</code> so the CLI always printed the
+          requested ID, not the actual registered ID (which may have a suffix). Now returns
+          the effective ID.
+        </p>
+      </div>
+      <div class="card good">
+        <span class="tag green">Review finding</span>
+        <h3>Config repair couldn't find wrapped projects</h3>
+        <p>
+          <code>repairWrappedLocalProjectConfig</code> looked up by hashed project ID, but
+          wrapped configs use the original name as key. Added single-entry fallback.
+        </p>
+      </div>
+      <div class="card good">
+        <span class="tag green">Copilot review</span>
+        <h3>parseTmuxNameV2 rejected digit-prefixed names</h3>
+        <p>
+          Regex required <code>[a-zA-Z]</code> start, but config schema allows digit-leading
+          <code>sessionPrefix</code>. Fixed to <code>[a-zA-Z0-9]</code>.
+        </p>
+      </div>
+      <div class="card good">
+        <span class="tag green">Copilot review</span>
+        <h3>DELETE route crashed on unsafe project IDs</h3>
+        <p>
+          <code>getProjectDir(id)</code> throws for IDs with path traversal. DELETE handler
+          now catches and returns 400 instead of 500.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="reveal">
+    <span class="section-label">11 / Recommendation</span>
     <h2>Merge this so future AO work does not build on the wrong storage abstraction.</h2>
     <p>
       The alternative is to keep teaching every new feature about <code>storageKey</code>,
@@ -628,9 +1207,19 @@ config: projectId is enough</pre>
       it spreads the migration cost across future PRs.
     </p>
     <p>
-      PR #1466 pays that cost once, with a visible migration command and the safety checks
+      PR #1466 pays that cost once across 80 files, with a visible migration command,
+      54 migration-specific tests, 11 review rounds of hardening, and the safety checks
       expected for production user data.
     </p>
+    <div class="badge-row">
+      <div class="badge"><strong>50</strong> commits</div>
+      <div class="badge"><strong>80</strong> files</div>
+      <div class="badge"><strong>+6,014</strong> / <strong>-2,177</strong> lines</div>
+      <div class="badge"><strong>40</strong> test files</div>
+      <div class="badge"><strong>54</strong> migration tests</div>
+      <div class="badge"><strong>11</strong> review rounds</div>
+      <div class="badge"><strong>6</strong> changesets</div>
+    </div>
   </section>
 </main>
 
