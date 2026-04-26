@@ -395,6 +395,86 @@
         font-size: 13px;
       }
 
+      .storage-map {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 18px;
+        align-items: stretch;
+      }
+
+      .tree-card {
+        display: grid;
+        grid-template-rows: auto auto 1fr;
+        min-height: 100%;
+      }
+
+      pre.tree {
+        overflow: auto;
+        margin: 18px 0 0;
+        padding: 18px;
+        border: 1px solid rgba(23, 33, 29, 0.14);
+        border-radius: 8px;
+        background: #1d2722;
+        color: #f5ead6;
+        font-family: "SFMono-Regular", Consolas, monospace;
+        font-size: 12px;
+        line-height: 1.62;
+        white-space: pre;
+      }
+
+      .ledger {
+        display: grid;
+        grid-template-columns: 180px 1fr 1fr;
+        gap: 0;
+        overflow: hidden;
+        margin-top: 18px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.48);
+      }
+
+      .ledger > div {
+        padding: 16px;
+        border-top: 1px solid var(--line);
+      }
+
+      .ledger > div:nth-child(-n + 3) {
+        border-top: 0;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+      }
+
+      .ledger > div:nth-child(3n + 1) {
+        font-weight: 800;
+      }
+
+      .evidence {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 18px;
+      }
+
+      .evidence-item {
+        padding: 15px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fffaf0;
+      }
+
+      .evidence-item b {
+        display: block;
+        margin-bottom: 6px;
+      }
+
+      .evidence-item span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
       .loc {
         display: grid;
         grid-template-columns: 430px 1fr;
@@ -486,6 +566,9 @@
         .grid.three,
         .compare,
         .flow,
+        .storage-map,
+        .ledger,
+        .evidence,
         .loc,
         .summary,
         .section-head {
@@ -513,12 +596,12 @@
             Corrected comparison after fetching remotes:
             <code>upstream/main..HEAD</code>. Base is fetched <code>upstream/main</code>
             at <code>836ff6ee</code>; PR head is local <code>storage-redesign</code>
-            at <code>27666c6e</code>.
+            at <code>65875bd9</code>.
           </p>
           <div class="chips" aria-label="Compared refs">
             <span class="chip">Base: upstream/main</span>
             <span class="chip">Head: storage-redesign</span>
-            <span class="chip">Diff: +6,011 / -2,378</span>
+            <span class="chip">Diff: +6,172 / -2,379</span>
           </div>
         </div>
 
@@ -533,9 +616,9 @@
           </div>
           <div class="metrics">
             <div class="metric"><strong>84</strong><span>files changed</span></div>
-            <div class="metric"><strong>+3,633</strong><span>net LOC</span></div>
-            <div class="metric"><strong>+6,011</strong><span>insertions</span></div>
-            <div class="metric"><strong>-2,378</strong><span>deletions</span></div>
+            <div class="metric"><strong>+3,793</strong><span>net LOC</span></div>
+            <div class="metric"><strong>+6,172</strong><span>insertions</span></div>
+            <div class="metric"><strong>-2,379</strong><span>deletions</span></div>
           </div>
         </aside>
       </section>
@@ -724,9 +807,148 @@
         </article>
       </section>
 
+      <section aria-labelledby="storage-layout">
+        <div class="section-head">
+          <h2 id="storage-layout">4. Storage Layout: Before vs Now</h2>
+          <p class="note">
+            This is the architectural center of the PR: AO moves from storage-key/hash buckets
+            to stable project directories with JSON session metadata.
+          </p>
+        </div>
+
+        <div class="storage-map">
+          <article class="panel tree-card">
+            <span class="tag red">Before, upstream/main</span>
+            <h3>Storage key was the filesystem identity</h3>
+            <pre class="tree">~/.agent-orchestrator/
+├── 7dc54da05c9e-agent-orchestrator/
+│   ├── sessions/
+│   │   ├── ao-79              # key=value metadata
+│   │   ├── ao-orchestrator    # key=value metadata
+│   │   └── archive/
+│   │       └── ao-79_20260422T083732Z
+│   └── worktrees/
+│       └── ao-79/
+├── eca743472f76-donna/
+│   ├── sessions/
+│   └── worktrees/
+└── config.yaml
+    projects.*.storageKey: 7dc54da05c9e</pre>
+          </article>
+
+          <article class="panel tree-card">
+            <span class="tag green">After, PR head</span>
+            <h3>Project ID is the filesystem identity</h3>
+            <pre class="tree">~/.agent-orchestrator/
+├── projects/
+│   ├── agent-orchestrator/
+│   │   ├── sessions/
+│   │   │   ├── ao-79.json
+│   │   │   ├── ao-orchestrator.json
+│   │   │   └── .agent-report-audit/
+│   │   │       └── ao-79.ndjson
+│   │   ├── worktrees/
+│   │   │   └── ao-79/
+│   │   └── worker-prompt-ao-79.md
+│   └── donna/
+│       ├── sessions/
+│       └── worktrees/
+├── 7dc54da05c9e-agent-orchestrator.migrated/
+└── config.yaml
+    projects.*.projectId: agent-orchestrator</pre>
+          </article>
+        </div>
+
+        <article class="matrix" style="margin-top: 18px">
+          <h3>What moved where</h3>
+          <div class="ledger" role="table" aria-label="Storage layout comparison">
+            <div>Object</div>
+            <div>Before</div>
+            <div>Now</div>
+
+            <div>Projects</div>
+            <div>
+              Project data was spread across hash/storage-key directories such as
+              <code>~/.agent-orchestrator/7dc54da05c9e-agent-orchestrator</code>.
+            </div>
+            <div>
+              Project data is grouped under
+              <code>~/.agent-orchestrator/projects/{projectId}</code>, for example
+              <code>projects/agent-orchestrator</code>.
+            </div>
+
+            <div>Sessions</div>
+            <div>
+              Session files lived in <code>{storageKey}/sessions/{sessionId}</code> without a
+              JSON extension.
+            </div>
+            <div>
+              Session files live in <code>projects/{projectId}/sessions/{sessionId}.json</code>.
+            </div>
+
+            <div>Metadata</div>
+            <div>
+              Metadata was flat <code>key=value</code> text. Status, runtime handle, lifecycle, and
+              report fields were split across scalar keys.
+            </div>
+            <div>
+              Metadata is canonical JSON. Lifecycle, runtime handle, dashboard, agent report, and
+              report watcher data are structured objects.
+            </div>
+
+            <div>Archived sessions</div>
+            <div>
+              Deleted/killed records moved into <code>sessions/archive/{sessionId}_{timestamp}</code>.
+            </div>
+            <div>
+              Terminated sessions remain visible as JSON metadata in <code>sessions/</code>.
+              Migration flattens legacy archive files into terminated records.
+            </div>
+
+            <div>Worktrees</div>
+            <div>
+              Worktrees lived under <code>{storageKey}/worktrees/{sessionId}</code>, tied to the
+              derived storage key.
+            </div>
+            <div>
+              Worktrees live under <code>projects/{projectId}/worktrees/{sessionId}</code>, tied to
+              project identity.
+            </div>
+
+            <div>Config</div>
+            <div>
+              Global config carried <code>storageKey</code> per project to locate the hash bucket.
+            </div>
+            <div>
+              Runtime lookup is project-ID based. On successful migration, <code>storageKey</code>
+              is stripped and old hash dirs are renamed to <code>*.migrated</code>.
+            </div>
+          </div>
+        </article>
+
+        <div class="evidence">
+          <div class="evidence-item">
+            <b>Local legacy evidence</b>
+            <span>Many <code>12hex-name.migrated</code> dirs remain under <code>~/.agent-orchestrator</code>.</span>
+          </div>
+          <div class="evidence-item">
+            <b>Local V2 evidence</b>
+            <span><code>~/.agent-orchestrator/projects/agent-orchestrator/sessions/*.json</code> exists.</span>
+          </div>
+          <div class="evidence-item">
+            <b>Project worktrees</b>
+            <span><code>projects/agent-orchestrator/worktrees/ao-84</code> shows V2 worktree placement.</span>
+          </div>
+          <div class="evidence-item">
+            <b>Report audit</b>
+            <span><code>sessions/.agent-report-audit/*.ndjson</code> stores report history beside session metadata.</span>
+          </div>
+        </div>
+      </section>
+
       <section aria-labelledby="ux">
         <div class="section-head">
-          <h2 id="ux">4. UX Changes</h2>
+          <h2 id="ux">5. UX Changes</h2>
           <p class="note">
             The PR exposes the storage-redesign workflow through CLI, dashboard, and project settings.
           </p>
@@ -786,7 +1008,7 @@
 
       <section aria-labelledby="loc">
         <div class="section-head">
-          <h2 id="loc">5. LOC Change Overview</h2>
+          <h2 id="loc">6. LOC Change Overview</h2>
           <p class="note">
             Fetched comparison: <code>git diff --shortstat upstream/main..HEAD</code>.
           </p>
@@ -796,10 +1018,10 @@
           <aside class="panel">
             <h3>Shortstat</h3>
             <div class="metrics">
-              <div class="metric"><strong>6,011</strong><span>insertions</span></div>
-              <div class="metric"><strong>2,378</strong><span>deletions</span></div>
+              <div class="metric"><strong>6,172</strong><span>insertions</span></div>
+              <div class="metric"><strong>2,379</strong><span>deletions</span></div>
               <div class="metric"><strong>84</strong><span>files changed</span></div>
-              <div class="metric"><strong>+3,633</strong><span>net LOC</span></div>
+              <div class="metric"><strong>+3,793</strong><span>net LOC</span></div>
             </div>
           </aside>
 
@@ -809,7 +1031,7 @@
               <div class="bar-row">
                 <label>packages/core</label>
                 <div class="track"><div class="bar" style="width: 100%"></div></div>
-                <span class="delta">+2,707</span>
+                <span class="delta">+3,448</span>
               </div>
               <div class="bar-row">
                 <label>STORAGE_REDESIGN.md</label>
@@ -819,7 +1041,7 @@
               <div class="bar-row">
                 <label>packages/cli</label>
                 <div class="track"><div class="bar" style="width: 14%"></div></div>
-                <span class="delta">+387</span>
+                <span class="delta">+280</span>
               </div>
               <div class="bar-row">
                 <label>packages/web</label>
