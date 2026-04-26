@@ -1,0 +1,884 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PR #1466 Behavior Dashboard - Agent Orchestrator</title>
+    <style>
+      :root {
+        --ink: #17211d;
+        --muted: #66736d;
+        --paper: #f7f0e3;
+        --panel: #fffdf8;
+        --line: #d9cdb7;
+        --green: #176b48;
+        --green-soft: #dceee4;
+        --blue: #275d8f;
+        --blue-soft: #deebf6;
+        --red: #9c412f;
+        --red-soft: #f4ded6;
+        --gold: #a87316;
+        --gold-soft: #f3e4bf;
+        --shadow: 0 24px 70px rgba(36, 28, 18, 0.14);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 16% 8%, rgba(23, 107, 72, 0.16), transparent 32rem),
+          radial-gradient(circle at 86% 2%, rgba(39, 93, 143, 0.13), transparent 31rem),
+          linear-gradient(135deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 38%),
+          var(--paper);
+        font-family: "Avenir Next", "Segoe UI", "Helvetica Neue", sans-serif;
+        line-height: 1.45;
+      }
+
+      body::before {
+        content: "";
+        pointer-events: none;
+        position: fixed;
+        inset: 0;
+        opacity: 0.18;
+        background-image:
+          linear-gradient(rgba(23, 33, 29, 0.05) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(23, 33, 29, 0.045) 1px, transparent 1px);
+        background-size: 30px 30px;
+        mask-image: linear-gradient(to bottom, black, transparent 78%);
+      }
+
+      main {
+        position: relative;
+        max-width: 1220px;
+        margin: 0 auto;
+        padding: 44px 28px 72px;
+      }
+
+      .panel,
+      .hero-card,
+      .brief,
+      .matrix,
+      .summary {
+        background: rgba(255, 253, 248, 0.88);
+        border: 1px solid rgba(92, 76, 48, 0.24);
+        border-radius: 10px;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(18px);
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.18fr) 390px;
+        gap: 24px;
+        align-items: stretch;
+      }
+
+      .hero-card {
+        position: relative;
+        overflow: hidden;
+        min-height: 450px;
+        padding: 44px;
+      }
+
+      .hero-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(90deg, transparent 0 67%, rgba(23, 107, 72, 0.12) 67% 68%, transparent 68%),
+          linear-gradient(0deg, transparent 0 77%, rgba(168, 115, 22, 0.12) 77% 78%, transparent 78%);
+      }
+
+      .hero-card > * {
+        position: relative;
+        z-index: 1;
+      }
+
+      .kicker {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0 0 34px;
+        color: var(--green);
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .kicker::before {
+        content: "";
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--green);
+      }
+
+      h1,
+      h2,
+      h3 {
+        margin: 0;
+        font-family: Georgia, "Times New Roman", serif;
+        font-weight: 500;
+        letter-spacing: 0;
+      }
+
+      h1 {
+        max-width: 780px;
+        font-size: clamp(48px, 7vw, 88px);
+        line-height: 0.94;
+      }
+
+      .subtitle {
+        max-width: 730px;
+        margin: 28px 0 0;
+        color: #44514b;
+        font-size: 19px;
+      }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 34px;
+      }
+
+      code,
+      .chip {
+        font-family: "SFMono-Regular", Consolas, monospace;
+      }
+
+      code {
+        padding: 2px 5px;
+        border-radius: 5px;
+        background: rgba(23, 33, 29, 0.08);
+      }
+
+      .chip {
+        display: inline-flex;
+        min-height: 34px;
+        align-items: center;
+        padding: 8px 12px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.54);
+        color: #39463f;
+        font-size: 12px;
+      }
+
+      .brief {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 28px;
+      }
+
+      .brief h2 {
+        font-size: 31px;
+      }
+
+      .brief p,
+      .note,
+      .panel p,
+      .summary p {
+        color: var(--muted);
+      }
+
+      .metrics {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-top: 22px;
+      }
+
+      .metric {
+        min-height: 112px;
+        padding: 17px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fffaf0;
+      }
+
+      .metric strong {
+        display: block;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 34px;
+        line-height: 1;
+        font-weight: 500;
+      }
+
+      .metric span {
+        display: block;
+        margin-top: 10px;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      section {
+        margin-top: 54px;
+      }
+
+      .section-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 24px;
+        margin-bottom: 18px;
+      }
+
+      .section-head h2 {
+        font-size: 42px;
+      }
+
+      .note {
+        max-width: 470px;
+        margin: 0;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+      }
+
+      .grid.three {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .panel {
+        padding: 24px;
+      }
+
+      .panel h3 {
+        font-size: 26px;
+      }
+
+      .tag {
+        display: inline-flex;
+        margin-bottom: 15px;
+        padding: 6px 9px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .tag.green {
+        color: var(--green);
+        background: var(--green-soft);
+      }
+
+      .tag.blue {
+        color: var(--blue);
+        background: var(--blue-soft);
+      }
+
+      .tag.red {
+        color: var(--red);
+        background: var(--red-soft);
+      }
+
+      .tag.gold {
+        color: var(--gold);
+        background: var(--gold-soft);
+      }
+
+      .compare {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        margin-top: 18px;
+      }
+
+      .side {
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.5);
+      }
+
+      .side b {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      ul {
+        margin: 0;
+        padding-left: 18px;
+        color: #4a574f;
+      }
+
+      li + li {
+        margin-top: 7px;
+      }
+
+      .matrix {
+        overflow: hidden;
+      }
+
+      .matrix h3 {
+        padding: 24px 24px 0;
+        font-size: 30px;
+      }
+
+      table {
+        width: 100%;
+        margin-top: 18px;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        vertical-align: top;
+        padding: 18px 20px;
+        border-top: 1px solid var(--line);
+        text-align: left;
+      }
+
+      th {
+        color: var(--muted);
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      td:first-child {
+        width: 180px;
+        font-weight: 800;
+      }
+
+      .flow {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 18px;
+      }
+
+      .step {
+        min-height: 138px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fffaf0;
+      }
+
+      .num {
+        display: inline-grid;
+        place-items: center;
+        width: 28px;
+        height: 28px;
+        margin-bottom: 12px;
+        border-radius: 50%;
+        background: #202824;
+        color: white;
+        font-family: Georgia, "Times New Roman", serif;
+      }
+
+      .step b {
+        display: block;
+        margin-bottom: 6px;
+      }
+
+      .step span:not(.num) {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .loc {
+        display: grid;
+        grid-template-columns: 430px 1fr;
+        gap: 18px;
+      }
+
+      .bars {
+        display: grid;
+        gap: 14px;
+        margin-top: 20px;
+      }
+
+      .bar-row {
+        display: grid;
+        grid-template-columns: 160px 1fr 112px;
+        gap: 12px;
+        align-items: center;
+        font-size: 13px;
+      }
+
+      .bar-row label {
+        font-weight: 800;
+      }
+
+      .track {
+        height: 13px;
+        overflow: hidden;
+        border: 1px solid rgba(23, 33, 29, 0.12);
+        border-radius: 999px;
+        background: rgba(23, 33, 29, 0.08);
+      }
+
+      .bar {
+        height: 100%;
+        border-radius: 999px;
+        background: linear-gradient(90deg, var(--green), var(--blue));
+      }
+
+      .delta {
+        color: var(--green);
+        font-family: "SFMono-Regular", Consolas, monospace;
+      }
+
+      .summary {
+        display: grid;
+        grid-template-columns: 0.95fr 1.05fr;
+        gap: 26px;
+        padding: 30px;
+      }
+
+      .summary h2 {
+        font-size: 38px;
+      }
+
+      .verdict {
+        display: grid;
+        gap: 12px;
+      }
+
+      .verdict-item {
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.52);
+      }
+
+      .verdict-item b {
+        display: block;
+        margin-bottom: 6px;
+      }
+
+      .verdict-item span {
+        color: var(--muted);
+      }
+
+      footer {
+        margin-top: 44px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      @media (max-width: 980px) {
+        main {
+          padding: 24px 16px 54px;
+        }
+
+        .hero,
+        .grid,
+        .grid.three,
+        .compare,
+        .flow,
+        .loc,
+        .summary,
+        .section-head {
+          display: grid;
+          grid-template-columns: 1fr;
+        }
+
+        .bar-row {
+          grid-template-columns: 1fr;
+        }
+
+        .hero-card {
+          padding: 30px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="hero" aria-labelledby="title">
+        <div class="hero-card">
+          <p class="kicker">PR #1466 board brief</p>
+          <h1 id="title">Storage V2 lands with migration tooling and broader stop recovery.</h1>
+          <p class="subtitle">
+            Corrected comparison after fetching remotes:
+            <code>upstream/main..HEAD</code>. Base is fetched <code>upstream/main</code>
+            at <code>836ff6ee</code>; PR head is local <code>storage-redesign</code>
+            at <code>27666c6e</code>.
+          </p>
+          <div class="chips" aria-label="Compared refs">
+            <span class="chip">Base: upstream/main</span>
+            <span class="chip">Head: storage-redesign</span>
+            <span class="chip">Diff: +6,011 / -2,378</span>
+          </div>
+        </div>
+
+        <aside class="brief">
+          <div>
+            <h2>Executive readout</h2>
+            <p>
+              The PR adds the storage redesign rather than removing it. It introduces JSON metadata,
+              <code>projects/{projectId}</code> storage, a migration/rollback command, and a
+              restore-on-next-start flow after <code>ao stop</code>.
+            </p>
+          </div>
+          <div class="metrics">
+            <div class="metric"><strong>84</strong><span>files changed</span></div>
+            <div class="metric"><strong>+3,633</strong><span>net LOC</span></div>
+            <div class="metric"><strong>+6,011</strong><span>insertions</span></div>
+            <div class="metric"><strong>-2,378</strong><span>deletions</span></div>
+          </div>
+        </aside>
+      </section>
+
+      <section aria-labelledby="start-stop">
+        <div class="section-head">
+          <h2 id="start-stop">1. Start and Stop</h2>
+          <p class="note">
+            The corrected direction shows <code>ao stop</code> becoming broader, and
+            <code>ao start</code> gaining a restore prompt for sessions stopped previously.
+          </p>
+        </div>
+
+        <div class="grid">
+          <article class="panel">
+            <span class="tag green">ao start</span>
+            <h3>Startup now offers to restore stopped sessions</h3>
+            <div class="compare">
+              <div class="side">
+                <b>Before, upstream/main</b>
+                <ul>
+                  <li>Started dashboard, lifecycle worker, and ensured the orchestrator.</li>
+                  <li>No <code>last-stop.json</code> recovery prompt after startup.</li>
+                  <li>Already-running flow offered open, new orchestrator, restart, or quit.</li>
+                </ul>
+              </div>
+              <div class="side">
+                <b>After, PR head</b>
+                <ul>
+                  <li>Still starts dashboard, lifecycle worker, and orchestrator.</li>
+                  <li>Reads <code>last-stop.json</code> for the selected project.</li>
+                  <li>Prompts humans to restore sessions stopped during the last <code>ao stop</code>.</li>
+                  <li>Skips restoring the orchestrator when it was already restored by <code>ensureOrchestrator()</code>.</li>
+                </ul>
+              </div>
+            </div>
+          </article>
+
+          <article class="panel">
+            <span class="tag red">ao stop</span>
+            <h3>Stop now tears down active project sessions</h3>
+            <div class="compare">
+              <div class="side">
+                <b>Before, upstream/main</b>
+                <ul>
+                  <li>Located the most recently active orchestrator session.</li>
+                  <li>Killed only that orchestrator session.</li>
+                  <li>Stopped dashboard and unregistered <code>running.json</code>.</li>
+                </ul>
+              </div>
+              <div class="side">
+                <b>After, PR head</b>
+                <ul>
+                  <li>Lists all sessions for the project.</li>
+                  <li>Kills all active non-terminal, non-terminal-session entries.</li>
+                  <li>Prints stopped session IDs for scripts and non-TTY callers.</li>
+                  <li>Records killed IDs to <code>last-stop.json</code> for restore on next start.</li>
+                </ul>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section aria-labelledby="buttons">
+        <div class="section-head">
+          <h2 id="buttons">2. Kill and Restore Buttons</h2>
+          <p class="note">
+            The web endpoints still call the same session-manager methods, but the PR changes
+            metadata lifecycle semantics underneath those actions.
+          </p>
+        </div>
+
+        <div class="matrix">
+          <h3>Dashboard action behavior</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Action</th>
+                <th>Before, upstream/main</th>
+                <th>After, PR head</th>
+                <th>Implication</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Kill button</td>
+                <td>
+                  Calls <code>POST /api/sessions/:id/kill</code>. Kill updated lifecycle and
+                  archived metadata by deleting the active metadata file with archive enabled.
+                </td>
+                <td>
+                  Same endpoint, but killed sessions remain represented as metadata with a
+                  terminated lifecycle. Idempotency checks look for terminated lifecycle state
+                  instead of archive presence.
+                </td>
+                <td>
+                  Killed sessions are easier for restore/status flows to find without archive lookup.
+                </td>
+              </tr>
+              <tr>
+                <td>Restore button</td>
+                <td>
+                  Restore checked active metadata first, then archived metadata. Archived restore
+                  rehydrated metadata and set status to <code>spawning</code>.
+                </td>
+                <td>
+                  Restore finds active metadata only, validates restorability, recreates workspace
+                  if needed, relaunches runtime, resets lifecycle to working, and clears terminal PR state.
+                </td>
+                <td>
+                  Restore becomes lifecycle-reset based and tied to the active V2 metadata record.
+                </td>
+              </tr>
+              <tr>
+                <td>Done bar restore</td>
+                <td>
+                  Done cards suppress Restore for merged cards using
+                  <code>canRestore &amp;&amp; !isMerged</code>.
+                </td>
+                <td>
+                  Restore is shown whenever the status is not in
+                  <code>NON_RESTORABLE_STATUSES</code>, so more done-card states expose recovery.
+                </td>
+                <td>
+                  More completed/terminal-looking sessions can be resumed from the UI.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section aria-labelledby="migration">
+        <div class="section-head">
+          <h2 id="migration">3. migrate-storage</h2>
+          <p class="note">
+            In the corrected diff, <code>migrate-storage</code> is introduced, not removed.
+          </p>
+        </div>
+
+        <article class="panel">
+          <span class="tag gold">New command</span>
+          <h3>Purpose-built migration from legacy hash storage to V2 project storage</h3>
+          <div class="flow">
+            <div class="step">
+              <span class="num">1</span>
+              <b>Inventory</b>
+              <span>Scans <code>~/.agent-orchestrator</code> for legacy hash-based directories.</span>
+            </div>
+            <div class="step">
+              <span class="num">2</span>
+              <b>Guard</b>
+              <span>Detects active tmux sessions and blocks migration unless <code>--force</code> is used.</span>
+            </div>
+            <div class="step">
+              <span class="num">3</span>
+              <b>Convert</b>
+              <span>Moves sessions/worktrees into <code>projects/{projectId}</code> and converts key/value metadata to JSON.</span>
+            </div>
+            <div class="step">
+              <span class="num">4</span>
+              <b>Rollback</b>
+              <span>Supports <code>--rollback</code> by restoring <code>*.migrated</code> directories.</span>
+            </div>
+          </div>
+          <div class="compare">
+            <div class="side">
+              <b>Before, upstream/main</b>
+              <ul>
+                <li>No registered <code>ao migrate-storage</code> command.</li>
+                <li>Runtime used storage-key directories and flat key/value metadata.</li>
+                <li>Project relinking handled storage-key changes.</li>
+              </ul>
+            </div>
+            <div class="side">
+              <b>After, PR head</b>
+              <ul>
+                <li>CLI registers <code>ao migrate-storage</code>.</li>
+                <li>Options: <code>--dry-run</code>, <code>--force</code>, <code>--rollback</code>.</li>
+                <li>New core module: <code>packages/core/src/migration/storage-v2.ts</code>.</li>
+                <li>Large test coverage added in <code>migration-storage-v2.test.ts</code>.</li>
+              </ul>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section aria-labelledby="ux">
+        <div class="section-head">
+          <h2 id="ux">4. UX Changes</h2>
+          <p class="note">
+            The PR exposes the storage-redesign workflow through CLI, dashboard, and project settings.
+          </p>
+        </div>
+
+        <div class="grid three">
+          <article class="panel">
+            <span class="tag blue">Start/stop</span>
+            <h3>Stop becomes recoverable</h3>
+            <p>
+              <code>ao stop</code> records stopped sessions, and <code>ao start</code> can restore them
+              interactively on the next launch.
+            </p>
+          </article>
+          <article class="panel">
+            <span class="tag blue">Project identity</span>
+            <h3>Storage key fades from UI</h3>
+            <p>
+              The PR removes storage key from some project settings surfaces as storage moves to
+              <code>projects/{projectId}</code>.
+            </p>
+          </article>
+          <article class="panel">
+            <span class="tag blue">Add project</span>
+            <h3>ID collision UX returns</h3>
+            <p>
+              Add-project conflict handling moves back toward project-ID suggestions instead of
+              storage-key reuse confirmation.
+            </p>
+          </article>
+          <article class="panel">
+            <span class="tag blue">Status CLI</span>
+            <h3>Report history added</h3>
+            <p>
+              <code>ao status --reports &lt;value&gt;</code> can show agent report audit history,
+              with <code>full</code> or a numeric limit.
+            </p>
+          </article>
+          <article class="panel">
+            <span class="tag blue">Project CLI</span>
+            <h3>Relink command removed</h3>
+            <p>
+              The storage-key relink command disappears because V2 storage no longer depends on
+              repo-origin derived storage keys.
+            </p>
+          </article>
+          <article class="panel">
+            <span class="tag blue">Metadata</span>
+            <h3>JSON becomes canonical</h3>
+            <p>
+              Session files become <code>.json</code>, with lifecycle stored as an object and status
+              derived from lifecycle where possible.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section aria-labelledby="loc">
+        <div class="section-head">
+          <h2 id="loc">5. LOC Change Overview</h2>
+          <p class="note">
+            Fetched comparison: <code>git diff --shortstat upstream/main..HEAD</code>.
+          </p>
+        </div>
+
+        <div class="loc">
+          <aside class="panel">
+            <h3>Shortstat</h3>
+            <div class="metrics">
+              <div class="metric"><strong>6,011</strong><span>insertions</span></div>
+              <div class="metric"><strong>2,378</strong><span>deletions</span></div>
+              <div class="metric"><strong>84</strong><span>files changed</span></div>
+              <div class="metric"><strong>+3,633</strong><span>net LOC</span></div>
+            </div>
+          </aside>
+
+          <article class="panel">
+            <h3>By area</h3>
+            <div class="bars">
+              <div class="bar-row">
+                <label>packages/core</label>
+                <div class="track"><div class="bar" style="width: 100%"></div></div>
+                <span class="delta">+2,707</span>
+              </div>
+              <div class="bar-row">
+                <label>STORAGE_REDESIGN.md</label>
+                <div class="track"><div class="bar" style="width: 15%"></div></div>
+                <span class="delta">+405</span>
+              </div>
+              <div class="bar-row">
+                <label>packages/cli</label>
+                <div class="track"><div class="bar" style="width: 14%"></div></div>
+                <span class="delta">+387</span>
+              </div>
+              <div class="bar-row">
+                <label>packages/web</label>
+                <div class="track"><div class="bar" style="width: 4%"></div></div>
+                <span class="delta">+103</span>
+              </div>
+              <div class="bar-row">
+                <label>plugins</label>
+                <div class="track"><div class="bar" style="width: 2%"></div></div>
+                <span class="delta">+50</span>
+              </div>
+              <div class="bar-row">
+                <label>integration-tests</label>
+                <div class="track"><div class="bar" style="width: 1%"></div></div>
+                <span class="delta" style="color: var(--red)">-20</span>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section aria-labelledby="summary">
+        <div class="summary">
+          <div>
+            <span class="tag green">Overall summary</span>
+            <h2 id="summary">This PR ships the storage redesign and its operational bridge.</h2>
+            <p>
+              The PR moves AO from storage-key based flat metadata toward project-scoped JSON
+              storage, adds a migration and rollback command, and changes stop/start behavior so
+              stopped active sessions can be recovered. It also expands status reporting with
+              agent report history and adjusts project UX around the new identity model.
+            </p>
+          </div>
+          <div class="verdict">
+            <div class="verdict-item">
+              <b>Strategic direction</b>
+              <span>Adopts V2 storage: <code>projects/{projectId}</code>, JSON metadata, lifecycle-centered status.</span>
+            </div>
+            <div class="verdict-item">
+              <b>User impact</b>
+              <span><code>ao stop</code> is more aggressive, but <code>ao start</code> can restore what it stopped.</span>
+            </div>
+            <div class="verdict-item">
+              <b>Migration story</b>
+              <span>Includes dry run, force, crash marker behavior, old-directory preservation, and rollback.</span>
+            </div>
+            <div class="verdict-item">
+              <b>Risk to watch</b>
+              <span>Storage migrations are high blast-radius; validate active-session guards, rollback, archive flattening, and cross-project collisions.</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer>
+        Corrected after <code>git fetch upstream</code> and generated from
+        <code>upstream/main..HEAD</code> in
+        <code>/Users/harshitsinghbhandari/Downloads/side-quests/agent-orchestrator</code>.
+      </footer>
+    </main>
+  </body>
+</html>
