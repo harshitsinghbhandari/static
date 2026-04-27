@@ -596,6 +596,36 @@
         display: none;
       }
 
+      .reviewed-by {
+        margin: 0 0 14px;
+        color: var(--green);
+        font-size: 12px;
+        font-weight: 900;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .loc-explainer {
+        display: grid;
+        gap: 18px;
+      }
+
+      .loc-explainer .panel {
+        overflow: hidden;
+      }
+
+      .loc-table td:first-child {
+        width: 34%;
+        word-break: break-word;
+      }
+
+      .loc-table td:nth-child(2) {
+        width: 118px;
+        white-space: nowrap;
+        font-family: "SFMono-Regular", Consolas, monospace;
+        font-size: 12px;
+      }
+
       .commit-intro {
         max-width: 760px;
         margin: 0 0 32px;
@@ -724,9 +754,11 @@
   </head>
   <body>
     <main>
+      <p class="reviewed-by">Reviewed by Codex</p>
       <div class="tabs" role="tablist" aria-label="View mode">
         <button type="button" role="tab" aria-selected="true" data-tab-target="behavior">Behavior</button>
         <button type="button" role="tab" aria-selected="false" data-tab-target="commits">Commit Story</button>
+        <button type="button" role="tab" aria-selected="false" data-tab-target="loc-explanation">LOC Explanation</button>
       </div>
 
       <div class="tab-panel" data-tab="behavior" role="tabpanel">
@@ -742,7 +774,7 @@
           <div class="chips" aria-label="Compared refs">
             <span class="chip">Base: upstream/main</span>
             <span class="chip">Head: storage-redesign</span>
-            <span class="chip">Diff: +6,481 / -2,421</span>
+            <span class="chip">Diff: +7,276 / -2,423</span>
           </div>
         </div>
 
@@ -758,10 +790,10 @@
             </p>
           </div>
           <div class="metrics">
-            <div class="metric"><strong>90</strong><span>files changed</span></div>
-            <div class="metric"><strong>+4,060</strong><span>net LOC</span></div>
-            <div class="metric"><strong>+6,481</strong><span>insertions</span></div>
-            <div class="metric"><strong>-2,421</strong><span>deletions</span></div>
+            <div class="metric"><strong>93</strong><span>files changed</span></div>
+            <div class="metric"><strong>+4,853</strong><span>net LOC</span></div>
+            <div class="metric"><strong>+7,276</strong><span>insertions</span></div>
+            <div class="metric"><strong>-2,423</strong><span>deletions</span></div>
           </div>
         </aside>
       </section>
@@ -1378,10 +1410,10 @@
           <aside class="panel">
             <h3>Shortstat</h3>
             <div class="metrics">
-              <div class="metric"><strong>6,481</strong><span>insertions</span></div>
-              <div class="metric"><strong>2,421</strong><span>deletions</span></div>
-              <div class="metric"><strong>90</strong><span>files changed</span></div>
-              <div class="metric"><strong>+4,060</strong><span>net LOC</span></div>
+              <div class="metric"><strong>7,276</strong><span>insertions</span></div>
+              <div class="metric"><strong>2,423</strong><span>deletions</span></div>
+              <div class="metric"><strong>93</strong><span>files changed</span></div>
+              <div class="metric"><strong>+4,853</strong><span>net LOC</span></div>
             </div>
           </aside>
 
@@ -1476,7 +1508,7 @@
           <div class="section-head">
             <h2 id="commit-story">Commit Story</h2>
             <p class="note">
-              99 PR-owned commits between <code>upstream/main..HEAD</code>, grouped by theme. The
+              90 PR commits between <code>upstream/main..HEAD</code>, grouped by theme. The
               chronology was messy; the themes are not. Click any group to see its commits.
             </p>
           </div>
@@ -1832,6 +1864,297 @@
               </details>
             </article>
 
+          </div>
+        </section>
+      </div>
+
+      <div class="tab-panel" data-tab="loc-explanation" role="tabpanel" hidden>
+        <section aria-labelledby="loc-explanation-title">
+          <div class="section-head">
+            <h2 id="loc-explanation-title">LOC Explanation</h2>
+            <p class="note">
+              Scope: every changed file under <code>packages/core</code>. PR headline count:
+              <code>7,276</code> additions and <code>2,423</code> deletions. GitHub activity:
+              <code>51</code> conversations, <code>90</code> commits, <code>10</code> checks.
+            </p>
+          </div>
+
+          <div class="loc-explainer">
+            <article class="panel">
+              <h3>Core subtotal</h3>
+              <div class="metrics">
+                <div class="metric"><strong>49</strong><span>core files</span></div>
+                <div class="metric"><strong>4,672</strong><span>core additions</span></div>
+                <div class="metric"><strong>1,804</strong><span>core deletions</span></div>
+                <div class="metric"><strong>+2,868</strong><span>core net LOC</span></div>
+              </div>
+              <p>
+                Most of the core churn is intentional storage-redesign work: V2
+                <code>projects/{projectId}</code> paths, JSON metadata, lifecycle-derived status,
+                archive removal, and the migration/rollback harness. Test LOC dominates the additions,
+                especially the new migration coverage.
+              </p>
+            </article>
+
+            <article class="panel">
+              <h3>Core files, sorted by additions</h3>
+              <table class="loc-table">
+                <thead>
+                  <tr>
+                    <th>File</th>
+                    <th>LOC</th>
+                    <th>What changed</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>packages/core/src/__tests__/migration-storage-v2.test.ts</code></td>
+                    <td>+1,561 / -0</td>
+                    <td>Adds comprehensive migration coverage for V1-to-V2 layout conversion, rollback, dry-run, archives, worktrees, collisions, malformed data, active sessions, and idempotency.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/src/migration/storage-v2.ts</code></td>
+                    <td>+1,367 / -0</td>
+                    <td>Adds the storage migration engine: inventory, dry-run, active session checks, JSON conversion, archive flattening, worktree repair, rollback, idempotency, and recovery logging.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/src/metadata.ts</code></td>
+                    <td>+229 / -179</td>
+                    <td>Replaces key=value metadata with JSON read/write/mutate flows, handles typed runtime/dashboard/lifecycle fields, treats empty reserved files safely, and removes archive metadata APIs.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/src/__tests__/metadata.test.ts</code></td>
+                    <td>+210 / -171</td>
+                    <td>Replaces flat-file metadata tests with JSON serialization, typed-field migration, displayName preservation, empty-file mutation, and archive-removal expectations.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/src/session-manager.ts</code></td>
+                    <td>+181 / -211</td>
+                    <td>Rewires session CRUD to projectId paths, JSON metadata, lifecycle-derived status, stale runtime reconciliation, terminated-session restore, and permanent metadata deletion without archive APIs.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/src/__tests__/global-config.test.ts</code></td>
+                    <td>+128 / -183</td>
+                    <td>Replaces suffix/storageKey/relink coverage with deterministic hashed ID registration, same-path reconnect, global config behavior, and collision handling.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/src/global-config.ts</code></td>
+                    <td>+107 / -309</td>
+                    <td>Deletes storageKey collision/relink machinery and replaces suffix allocation with deterministic hashed project IDs, same-path reconnection, and explicit collision failure.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/src/paths.ts</code></td>
+                    <td>+107 / -17</td>
+                    <td>Adds V2 path helpers for projects, sessions, metadata files, worktrees, migration markers, and V1 detection while removing archive path helpers.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/src/__tests__/recovery-actions.test.ts</code></td>
+                    <td>+87 / -71</td>
+                    <td>Reworks cleanup tests so terminated sessions stay in sessions/ with lifecycle state instead of moving to archive.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/src/__tests__/paths.test.ts</code></td>
+                    <td>+81 / -0</td>
+                    <td>Adds path helper tests for V2 project/session/worktree paths, metadata extension behavior, and V1 detection.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/src/__tests__/session-manager/restore.test.ts</code></td>
+                    <td>+64 / -104</td>
+                    <td>Removes archive restore expectations and adds restore coverage for terminated/merged sessions, permission preservation, and runtimeHandle object shape.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/src/__tests__/session-manager/lifecycle.test.ts</code></td>
+                    <td>+51 / -40</td>
+                    <td>Adds/updates lifecycle tests for terminal reasons, stale runtime persistence, and derived legacy status behavior.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/src/portfolio-session-service.ts</code></td>
+                    <td>+42 / -20</td>
+                    <td>Reads sessions from project-scoped JSON metadata and enriches cross-project session listings without archive fallback.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/src/__tests__/portfolio-session-service.test.ts</code></td>
+                    <td>+35 / -40</td>
+                    <td>Updates portfolio session listing fixtures for JSON metadata, V2 paths, and no archive fallback.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/src/lifecycle-state.ts</code></td>
+                    <td>+35 / -20</td>
+                    <td>Expands lifecycle derivation so legacy display status is computed from canonical state, terminal reason, and PR state rather than persisted separately.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/src/agent-workspace-hooks.ts</code></td>
+                    <td>+34 / -11</td>
+                    <td>Reworks hook-side metadata mutation for JSON files and V2 session paths, including safer handling around session metadata writes.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/src/__tests__/session-manager/claim-pr.test.ts</code></td>
+                    <td>+29 / -29</td>
+                    <td>Refreshes PR claim fixtures to new metadata shape while preserving the claim behavior under test.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/src/lifecycle-manager.ts</code></td>
+                    <td>+28 / -24</td>
+                    <td>Moves polling and session status decisions onto canonical lifecycle state/reason, including persistence for lost runtimes.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/src/__tests__/lifecycle-transition.test.ts</code></td>
+                    <td>+26 / -32</td>
+                    <td>Rewrites transition assertions around canonical lifecycle and removes previousStatus expectations.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/src/index.ts</code></td>
+                    <td>+24 / -4</td>
+                    <td>Exports the new storage V2, lifecycle, migration, and metadata helpers while dropping removed archive/storageKey exports.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/src/__tests__/lifecycle-state.test.ts</code></td>
+                    <td>+23 / -10</td>
+                    <td>Adds coverage for new state/reason to legacy status mapping, including terminal runtime-lost behavior.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/src/__tests__/session-manager/query.test.ts</code></td>
+                    <td>+21 / -22</td>
+                    <td>Updates query/list tests for sessions retained in the active sessions directory and lifecycle-derived status.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/src/types.ts</code></td>
+                    <td>+20 / -39</td>
+                    <td>Changes core types by removing storageKey, nesting runtime/dashboard/lifecycle metadata, and tightening lifecycle/status shapes.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/src/lifecycle-status-decisions.ts</code></td>
+                    <td>+19 / -21</td>
+                    <td>Updates status decision output to the nested lifecycle/detecting shape and removes previousStatus as an input dependency.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/src/__tests__/session-manager/communication.test.ts</code></td>
+                    <td>+17 / -17</td>
+                    <td>Updates communication tests for JSON metadata and projectId session lookup paths.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/src/lifecycle-transition.ts</code></td>
+                    <td>+15 / -19</td>
+                    <td>Simplifies transitions around canonical lifecycle fields and removes now-stale legacy status preservation paths.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/src/__tests__/lifecycle-manager.test.ts</code></td>
+                    <td>+15 / -15</td>
+                    <td>Adjusts lifecycle polling expectations to canonical lifecycle state and derived legacy status.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/src/__tests__/plugin-integration.test.ts</code></td>
+                    <td>+14 / -6</td>
+                    <td>Updates plugin integration fixtures to use projectId identity and new metadata layout.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/src/utils/metadata-flatten.ts</code></td>
+                    <td>+13 / -0</td>
+                    <td>Adds a shared flattening helper for metadata compatibility paths that still need string-record views.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/src/__tests__/lifecycle-status-decisions.test.ts</code></td>
+                    <td>+10 / -10</td>
+                    <td>Updates decision fixtures for the nested lifecycle/detecting result shape.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/src/__tests__/test-utils.ts</code></td>
+                    <td>+10 / -16</td>
+                    <td>Simplifies shared test helpers around the new metadata/config shape and removes legacy storageKey setup.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/src/__tests__/recovery-validator.test.ts</code></td>
+                    <td>+9 / -9</td>
+                    <td>Updates validator fixtures for V2 path names and lifecycle metadata shape.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/src/__tests__/session-manager/spawn.test.ts</code></td>
+                    <td>+9 / -4</td>
+                    <td>Updates spawn fixtures for projectId storage paths and new metadata defaults.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/src/recovery/scanner.ts</code></td>
+                    <td>+8 / -6</td>
+                    <td>Scans V2 project/session directories and skips migration artifacts that should not be treated as live projects.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/src/portfolio-registry.ts</code></td>
+                    <td>+7 / -17</td>
+                    <td>Aligns portfolio registry entries with projectId identity and removes storageKey fields from registry persistence.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/src/__tests__/agent-report.test.ts</code></td>
+                    <td>+6 / -6</td>
+                    <td>Updates report fixtures and expectations for JSON metadata/V2 paths.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/src/__tests__/session-manager.test.ts</code></td>
+                    <td>+6 / -6</td>
+                    <td>Adjusts high-level session manager expectations for JSON metadata files and derived status.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/src/recovery/actions.ts</code></td>
+                    <td>+5 / -6</td>
+                    <td>Stops cleanup from moving sessions into archives and instead marks terminated lifecycle state in-place.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/src/__tests__/session-manager/cache.test.ts</code></td>
+                    <td>+5 / -3</td>
+                    <td>Updates cache tests for the V2 metadata source and stale runtime enrichment path.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/package.json</code></td>
+                    <td>+4 / -0</td>
+                    <td>Adds package dependencies or exports needed by the storage migration/runtime changes.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/src/__tests__/portfolio-registry.test.ts</code></td>
+                    <td>+3 / -4</td>
+                    <td>Adjusts registry expectations after storageKey was removed from persisted project entries.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/src/agent-report.ts</code></td>
+                    <td>+3 / -3</td>
+                    <td>Swaps report lookup path usage to the new project/session metadata conventions without changing the report surface.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/src/config.ts</code></td>
+                    <td>+2 / -21</td>
+                    <td>Removes storageKey-era config plumbing and narrows project identity to the project ID based resolver path.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/rollup.config.ts</code></td>
+                    <td>+1 / -0</td>
+                    <td>Updates the build input/external handling so the new core module graph bundles cleanly.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/src/utils/session-from-metadata.ts</code></td>
+                    <td>+1 / -1</td>
+                    <td>Updates session materialization to use the new lifecycle/status derivation semantics.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/__tests__/config.test.ts</code></td>
+                    <td>+0 / -43</td>
+                    <td>Removes storageKey config assertions that no longer apply after project identity moved to projectId.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/src/__tests__/config-validation.test.ts</code></td>
+                    <td>+0 / -24</td>
+                    <td>Drops validation cases for removed storageKey fields.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/src/__tests__/portfolio-projects.test.ts</code></td>
+                    <td>+0 / -2</td>
+                    <td>Removes storageKey assertions from portfolio project shape tests.</td>
+                  </tr>
+                  <tr>
+                    <td><code>packages/core/src/__tests__/project-resolver.test.ts</code></td>
+                    <td>+0 / -9</td>
+                    <td>Deletes resolver expectations tied to storageKey wrapping and legacy project identity.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </article>
           </div>
         </section>
       </div>
