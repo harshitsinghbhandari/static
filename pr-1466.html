@@ -556,6 +556,142 @@
         font-size: 13px;
       }
 
+      .tabs {
+        display: inline-flex;
+        gap: 0;
+        margin-bottom: 18px;
+        padding: 4px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: rgba(255, 253, 248, 0.92);
+        box-shadow: var(--shadow);
+      }
+
+      .tabs button {
+        appearance: none;
+        cursor: pointer;
+        padding: 10px 22px;
+        border: 0;
+        border-radius: 999px;
+        background: transparent;
+        color: var(--muted);
+        font-family: inherit;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        transition: background 0.15s ease, color 0.15s ease;
+      }
+
+      .tabs button[aria-selected="true"] {
+        background: var(--ink);
+        color: #f7f0e3;
+      }
+
+      .tabs button:not([aria-selected="true"]):hover {
+        color: var(--ink);
+      }
+
+      .tab-panel[hidden] {
+        display: none;
+      }
+
+      .commit-intro {
+        max-width: 760px;
+        margin: 0 0 32px;
+        color: var(--muted);
+        font-size: 16px;
+      }
+
+      .commit-groups {
+        display: grid;
+        gap: 18px;
+      }
+
+      .commit-group {
+        padding: 22px 24px;
+      }
+
+      .commit-group .head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 12px;
+      }
+
+      .commit-group .head h3 {
+        font-size: 22px;
+      }
+
+      .commit-group .count {
+        margin-left: auto;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .commit-group .why {
+        margin: 10px 0 0;
+        color: #44514b;
+        font-size: 14px;
+      }
+
+      .commit-group details {
+        margin-top: 14px;
+      }
+
+      .commit-group summary {
+        cursor: pointer;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+        list-style: none;
+      }
+
+      .commit-group summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .commit-group summary::before {
+        content: "▸ ";
+        color: var(--muted);
+      }
+
+      .commit-group details[open] summary::before {
+        content: "▾ ";
+      }
+
+      .commit-list {
+        margin: 12px 0 0;
+        padding: 0;
+        list-style: none;
+        font-size: 13px;
+        color: #39463f;
+      }
+
+      .commit-list li {
+        display: grid;
+        grid-template-columns: 84px 1fr;
+        gap: 12px;
+        padding: 6px 0;
+        border-top: 1px dashed rgba(23, 33, 29, 0.12);
+      }
+
+      .commit-list li:first-child {
+        border-top: 0;
+      }
+
+      .commit-list code {
+        background: transparent;
+        padding: 0;
+        color: var(--blue);
+        font-size: 12px;
+      }
+
       @media (max-width: 980px) {
         main {
           padding: 24px 16px 54px;
@@ -588,6 +724,12 @@
   </head>
   <body>
     <main>
+      <div class="tabs" role="tablist" aria-label="View mode">
+        <button type="button" role="tab" aria-selected="true" data-tab-target="behavior">Behavior</button>
+        <button type="button" role="tab" aria-selected="false" data-tab-target="commits">Commit Story</button>
+      </div>
+
+      <div class="tab-panel" data-tab="behavior" role="tabpanel">
       <section class="hero" aria-labelledby="title">
         <div class="hero-card">
           <p class="kicker">PR #1466 board brief</p>
@@ -1327,6 +1469,372 @@
           </div>
         </div>
       </section>
+      </div>
+
+      <div class="tab-panel" data-tab="commits" role="tabpanel" hidden>
+        <section aria-labelledby="commit-story">
+          <div class="section-head">
+            <h2 id="commit-story">Commit Story</h2>
+            <p class="note">
+              99 PR-owned commits between <code>upstream/main..HEAD</code>, grouped by theme. The
+              chronology was messy; the themes are not. Click any group to see its commits.
+            </p>
+          </div>
+
+          <p class="commit-intro">
+            The PR landed in roughly four arcs: a <b>foundational layout move</b> (V2 storage,
+            hashed identity, JSON metadata), a <b>simplification pass</b> (archive removal,
+            status dual-truth elimination), a <b>migration safety harness</b> (rollback, edge
+            cases, atomic ops), and a <b>cross-project CLI rework</b> (stop/start/Ctrl+C, tab
+            completions, sidebar scoping). Review-iteration commits are bucketed separately.
+          </p>
+
+          <div class="commit-groups">
+
+            <article class="commit-group panel">
+              <div class="head">
+                <span class="tag green">A · Foundation</span>
+                <h3>V2 storage layout &amp; hashed project identity</h3>
+                <span class="count">6 commits</span>
+              </div>
+              <p class="why">
+                Replaces the storageKey-based flat layout with <code>projects/{projectId}/</code> where
+                <code>projectId</code> is <code>{basename}_{hash}</code> — deterministic, collision-safe,
+                no manual suffixes. Every downstream consumer (worktree allocator, web tmux resolver,
+                <code>ao status</code>) is updated to use the new path helpers.
+              </p>
+              <details>
+                <summary>Commits</summary>
+                <ul class="commit-list">
+                  <li><code>e34b3ec5</code><span>Implement hashed project identity</span></li>
+                  <li><code>f53acd61</code><span>fix(core,workspace): route new worktrees to V2 project directory</span></li>
+                  <li><code>f7118ef1</code><span>fix(core,cli,web): allocate suffixed project ids on duplicate names</span></li>
+                  <li><code>f674422a</code><span>Fix orchestrator identity to use one canonical session per project (#1487)</span></li>
+                  <li><code>eca3001c</code><span>fix(web): resolve tmux sessions when storageKey is wrapped (#1488)</span></li>
+                  <li><code>643bb5e3</code><span>fix(cli): replace removed storageKey reference with getProjectSessionsDir</span></li>
+                </ul>
+              </details>
+            </article>
+
+            <article class="commit-group panel">
+              <div class="head">
+                <span class="tag blue">B · Format</span>
+                <h3>JSON metadata format</h3>
+                <span class="count">1 commit</span>
+              </div>
+              <p class="why">
+                Session metadata flips from key-value flat files to JSON. The PostToolUse and PATH-wrapper
+                hooks that mutate metadata had to learn the new format and the <code>.json</code> extension.
+              </p>
+              <details>
+                <summary>Commits</summary>
+                <ul class="commit-list">
+                  <li><code>721a8726</code><span>fix(core): update metadata hooks for JSON format and .json extension</span></li>
+                </ul>
+              </details>
+            </article>
+
+            <article class="commit-group panel">
+              <div class="head">
+                <span class="tag red">C · Simplification</span>
+                <h3>Archive directory removal</h3>
+                <span class="count">11 commits</span>
+              </div>
+              <p class="why">
+                The <code>archive/</code> directory is gone. Terminated sessions stay in
+                <code>sessions/</code> with a terminated lifecycle — restore, status, and dashboard flows
+                no longer need a second lookup path. The migration flattens existing archives in-place.
+              </p>
+              <details>
+                <summary>Commits</summary>
+                <ul class="commit-list">
+                  <li><code>f2b7141b</code><span>refactor(core): remove archive path functions from paths.ts and index.ts</span></li>
+                  <li><code>f3ab2206</code><span>refactor(core): remove archive logic from metadata.ts</span></li>
+                  <li><code>72c31489</code><span>refactor(core): remove archive code from session-manager.ts</span></li>
+                  <li><code>479f285e</code><span>fix(core): stop archiving sessions on cleanup in recovery/actions.ts</span></li>
+                  <li><code>46c8dbda</code><span>refactor(core): flatten archives into sessions/ during migration</span></li>
+                  <li><code>b24d225c</code><span>refactor(core): remove archive directory filter from listMetadata</span></li>
+                  <li><code>82adbbb7</code><span>fix(core): update tests to match archive-removal behavior</span></li>
+                  <li><code>45ac35f2</code><span>fix(core): address build/test issues from archive removal</span></li>
+                  <li><code>fe1d7fd8</code><span>fix(integration-tests): update archive filename regex for PID suffix</span></li>
+                  <li><code>1bf90801</code><span>docs: update handoff doc — archiving removed</span></li>
+                  <li><code>c057c1ff</code><span>docs: remove handoff document</span></li>
+                </ul>
+              </details>
+            </article>
+
+            <article class="commit-group panel">
+              <div class="head">
+                <span class="tag gold">D · Safety</span>
+                <h3>Crash-safe migration &amp; rollback</h3>
+                <span class="count">14 commits</span>
+              </div>
+              <p class="why">
+                The most defensive arc of the PR. Real-world migration has to survive partial failures,
+                interrupted runs, macOS case-insensitive collisions, stale tmux sessions, dry-run mode,
+                and recursive worktree paths. Most of these commits are review-driven hardening of
+                <code>migrate-storage</code>'s atomic-ops + rollback machinery.
+              </p>
+              <details>
+                <summary>Commits</summary>
+                <ul class="commit-list">
+                  <li><code>e530e4e1</code><span>prevent silent data loss on upgrade — V1 detection, git worktree repair, storageKey preservation</span></li>
+                  <li><code>a4923d7e</code><span>harden storage redesign migration rollback</span></li>
+                  <li><code>b36a5f1e</code><span>final merge review — Zod schema gaps, worktree repair, rollback safety, status priority</span></li>
+                  <li><code>64caef04</code><span>harden storage-redesign against edge cases (EC-1..EC-8, EC-14, EC-27)</span></li>
+                  <li><code>bb4c68fc</code><span>crash safety, atomic ops, corrupt data handling, test fixes</span></li>
+                  <li><code>880930a2</code><span>skip .migrated dirs in inventory to prevent .migrated.migrated on re-run</span></li>
+                  <li><code>ff61ee97</code><span>fix stray worktree recursion, rollback data loss, worktree path rewrite</span></li>
+                  <li><code>3d6f70eb</code><span>fix 3 critical migration issues</span></li>
+                  <li><code>fd4f969f</code><span>rollback worktree preservation, scoped tmux detection, JSON parse whitelist</span></li>
+                  <li><code>c800c89c</code><span>skip active session check during migrate-storage --dry-run</span></li>
+                  <li><code>752c01f7</code><span>correct migration error message to use ao session kill</span></li>
+                  <li><code>b18cbe22</code><span>graceful migration errors + skip orchestrator selector</span></li>
+                  <li><code>3aaef7d8</code><span>address migration review findings and orchestrator tmux double-prefix</span></li>
+                  <li><code>8df05b7a</code><span>address review findings — worktree paths, archive location, recovery log</span></li>
+                </ul>
+              </details>
+            </article>
+
+            <article class="commit-group panel">
+              <div class="head">
+                <span class="tag red">E · Refactor</span>
+                <h3>Status / lifecycle dual-truth elimination</h3>
+                <span class="count">6 commits</span>
+              </div>
+              <p class="why">
+                The legacy <code>SessionStatus</code> field used to be persisted alongside the
+                lifecycle state — two sources of truth that drifted. Status is now derived from
+                <code>state</code> + <code>reason</code>. Restore flows reset lifecycle and PR state
+                cleanly, including for previously-merged sessions.
+              </p>
+              <details>
+                <summary>Commits</summary>
+                <ul class="commit-list">
+                  <li><code>b8867941</code><span>eliminate status dual truth, fix jsonFields whitelist, add rollback dry-run and tests</span></li>
+                  <li><code>e9d9c762</code><span>remove stale previousStatus args and unused SessionStatus import</span></li>
+                  <li><code>d22f0c6f</code><span>reset lifecycle on restore and keep killed sessions in active metadata</span></li>
+                  <li><code>fc6fd88b</code><span>reset terminal PR state on session restore</span></li>
+                  <li><code>ad6c9f4b</code><span>add --dangerously-skip-permissions for all restored sessions</span></li>
+                  <li><code>b178eb66</code><span>fix(core,web): allow restoring merged sessions</span></li>
+                </ul>
+              </details>
+            </article>
+
+            <article class="commit-group panel">
+              <div class="head">
+                <span class="tag red">F · CLI</span>
+                <h3><code>ao stop</code> — cross-project + last-stop persistence</h3>
+                <span class="count">7 commits</span>
+              </div>
+              <p class="why">
+                <code>ao stop</code> with no args now tears down every project's sessions and writes
+                <code>last-stop.json</code> with an <code>otherProjects</code> field for cross-project
+                restore. <code>ao stop &lt;project&gt;</code> is surgical — does not touch the parent
+                process or the dashboard. Required loading global config instead of just local.
+              </p>
+              <details>
+                <summary>Commits</summary>
+                <ul class="commit-list">
+                  <li><code>27590ac4</code><span>feat(cli): add last-stop state persistence for ao stop/start restore</span></li>
+                  <li><code>5b5a1bd4</code><span>feat(cli): ao stop kills all active sessions and records them</span></li>
+                  <li><code>2d1d9df8</code><span>fix(cli): update stop tests for all-sessions kill behavior</span></li>
+                  <li><code>9e2df894</code><span>fix(core): persist stale runtime state + show cross-project sessions in ao stop/start</span></li>
+                  <li><code>97fc8348</code><span>fix(cli): scope ao stop to target project when explicit arg is given</span></li>
+                  <li><code>95cf979d</code><span>fix(cli): ao stop &lt;project&gt; must not kill parent process or dashboard</span></li>
+                  <li><code>6d7bae68</code><span>fix(cli): always load global config for ao stop to see all projects</span></li>
+                </ul>
+              </details>
+            </article>
+
+            <article class="commit-group panel">
+              <div class="head">
+                <span class="tag green">G · CLI</span>
+                <h3><code>ao start</code> — restore prompt + project picker</h3>
+                <span class="count">5 commits</span>
+              </div>
+              <p class="why">
+                Startup reads <code>last-stop.json</code> and offers to restore everything killed in the
+                previous shutdown — including sessions from other projects. The picker also gains an
+                "Add this project" affordance when launched in an unregistered cwd.
+              </p>
+              <details>
+                <summary>Commits</summary>
+                <ul class="commit-list">
+                  <li><code>bcab5462</code><span>feat(cli): ao start offers to restore sessions from last ao stop</span></li>
+                  <li><code>8b130964</code><span>fix(cli): ao start restores all sessions including cross-project ones</span></li>
+                  <li><code>1972fa30</code><span>fix(cli): auto-register flat local config in ao start</span></li>
+                  <li><code>d6a56a8f</code><span>feat(cli): show "Add project" in already-running menu when cwd is unregistered</span></li>
+                  <li><code>e1ecc091</code><span>feat(cli): show "Add this project" option in ao start project picker</span></li>
+                </ul>
+              </details>
+            </article>
+
+            <article class="commit-group panel">
+              <div class="head">
+                <span class="tag blue">H · CLI</span>
+                <h3>Cross-project visibility — global config &amp; tab completions</h3>
+                <span class="count">2 commits</span>
+              </div>
+              <p class="why">
+                Commands that need to see beyond the local <code>agent-orchestrator.yaml</code>
+                (tab completions, <code>ao stop &lt;other-project&gt;</code>) now merge in the global
+                config at <code>~/.agent-orchestrator/config.yaml</code>.
+              </p>
+              <details>
+                <summary>Commits</summary>
+                <ul class="commit-list">
+                  <li><code>39ebb07f</code><span>fix(cli): show all projects in tab completions by merging global config</span></li>
+                  <li><code>2db2951a</code><span>fix(cli): fall back to global config when project arg not in local config</span></li>
+                </ul>
+              </details>
+            </article>
+
+            <article class="commit-group panel">
+              <div class="head">
+                <span class="tag green">I · CLI</span>
+                <h3>Ctrl+C graceful shutdown</h3>
+                <span class="count">1 commit</span>
+              </div>
+              <p class="why">
+                Ctrl+C on <code>ao start</code> now mirrors <code>ao stop</code>: kills every session,
+                writes <code>last-stop.json</code>, unregisters <code>running.json</code>, with a 10s
+                hard timeout in case cleanup hangs.
+              </p>
+              <details>
+                <summary>Commits</summary>
+                <ul class="commit-list">
+                  <li><code>b4feda79</code><span>fix(cli): Ctrl+C on ao start performs full graceful shutdown</span></li>
+                </ul>
+              </details>
+            </article>
+
+            <article class="commit-group panel">
+              <div class="head">
+                <span class="tag blue">J · Web</span>
+                <h3>Dashboard sidebar scoping</h3>
+                <span class="count">1 commit</span>
+              </div>
+              <p class="why">
+                The sidebar always renders all sessions across projects; per-project filtering is
+                applied client-side at the kanban level. Fixes a regression where switching active
+                projects hid the sidebar contents.
+              </p>
+              <details>
+                <summary>Commits</summary>
+                <ul class="commit-list">
+                  <li><code>53e8476f</code><span>fix(web): sidebar shows all sessions regardless of active project</span></li>
+                </ul>
+              </details>
+            </article>
+
+            <article class="commit-group panel">
+              <div class="head">
+                <span class="tag green">K · Feature</span>
+                <h3><code>ao status --reports</code></h3>
+                <span class="count">1 commit</span>
+              </div>
+              <p class="why">
+                Adds a <code>--reports</code> flag to surface agent report history from the status
+                command — companion feature shipped alongside the storage rework.
+              </p>
+              <details>
+                <summary>Commits</summary>
+                <ul class="commit-list">
+                  <li><code>ea24dbb1</code><span>feat(cli): add --reports flag to ao status for agent report history</span></li>
+                </ul>
+              </details>
+            </article>
+
+            <article class="commit-group panel">
+              <div class="head">
+                <span class="tag gold">L · Review</span>
+                <h3>Review fixes, lint, conflict resolution</h3>
+                <span class="count">~16 commits</span>
+              </div>
+              <p class="why">
+                The review-iteration bucket — multiple rounds of Copilot/human review feedback,
+                ESLint fixes, gitleaks false-positive sweeps, and merge-conflict resolution against
+                a moving upstream. Bundled here so the themed groups above stay readable.
+              </p>
+              <details>
+                <summary>Commits</summary>
+                <ul class="commit-list">
+                  <li><code>65875bd9</code><span>fix: address storage redesign review issues</span></li>
+                  <li><code>27666c6e</code><span>fix(core): address review — sed JSON corruption, sanitizeBasename dot</span></li>
+                  <li><code>cc75471e</code><span>fix(core): address PR review comments</span></li>
+                  <li><code>896468a2</code><span>address PR review comments — parser, docs, delete route, prefix sanitization</span></li>
+                  <li><code>0d4563a1</code><span>fix(core): use strict equality to satisfy eqeqeq lint rule</span></li>
+                  <li><code>d173b471</code><span>fix(core,cli,web): address PR #1466 review findings</span></li>
+                  <li><code>57acc4cf</code><span>fix(core,web): address Copilot review comments</span></li>
+                  <li><code>8311a3e4</code><span>fix(core,cli): resolve merge conflicts with upstream/main</span></li>
+                  <li><code>49817974</code><span>fix(cli): prefix unused addCwdOption variable to satisfy lint</span></li>
+                  <li><code>e030d6ef</code><span>Merge PR #176 — fix/storage-redesign-review-fixes</span></li>
+                  <li><code>7484c001</code><span>fix(core): address storage redesign review findings</span></li>
+                  <li><code>1b404d2f</code><span>fix(core): remove unused readMetadata import in lifecycle test</span></li>
+                  <li><code>31b20ed2</code><span>fix: replace high-entropy test placeholder to avoid gitleaks</span></li>
+                  <li><code>3e23c8db</code><span>fix: targeted regex instead of path allowlist for gitleaks</span></li>
+                  <li><code>1e97cd21</code><span>fix(core,cli): align with upstream to reduce merge conflicts</span></li>
+                  <li><code>2fac0bd5</code><span>fix: resolve Phase 1+2 merge conflicts with upstream/main (#1487, #1238)</span></li>
+                </ul>
+              </details>
+            </article>
+
+            <article class="commit-group panel">
+              <div class="head">
+                <span class="tag blue">M · Docs</span>
+                <h3>Architecture &amp; behavior dashboard docs</h3>
+                <span class="count">3 commits</span>
+              </div>
+              <p class="why">
+                CLAUDE.md, AGENTS.md, copilot-instructions.md, and DESIGN.md updated for the new
+                CLI semantics, lifecycle states, and storage layout. Plus iterations on this
+                behavior dashboard itself.
+              </p>
+              <details>
+                <summary>Commits</summary>
+                <ul class="commit-list">
+                  <li><code>2d8fe4e7</code><span>docs: update architecture docs for CLI, lifecycle, and dashboard changes</span></li>
+                  <li><code>6d968b9f</code><span>docs: update PR behavior dashboard with behavioral fixes and cross-project CLI</span></li>
+                  <li><code>1428cadd</code><span>Revert "docs: update PR behavior dashboard ..."</span></li>
+                </ul>
+              </details>
+            </article>
+
+            <article class="commit-group panel">
+              <div class="head">
+                <span class="tag green">N · Upstream</span>
+                <h3>Upstream synced via merges</h3>
+                <span class="count">~25 commits, not PR work</span>
+              </div>
+              <p class="why">
+                Brought in by three <code>Merge upstream/main</code> commits over the lifetime of the
+                branch. Listed here only so the count reconciles with <code>git log upstream/main..HEAD</code>;
+                they are not part of the PR's authored changes.
+              </p>
+              <details>
+                <summary>Examples</summary>
+                <ul class="commit-list">
+                  <li><code>210f9d23</code><span>Merge branch 'main' into storage-redesign</span></li>
+                  <li><code>a66a5362</code><span>Merge remote-tracking branch 'upstream/main' into storage-redesign</span></li>
+                  <li><code>452d1937</code><span>Merge remote-tracking branch 'upstream/main' into storage-redesign</span></li>
+                  <li><code>a8bc7469</code><span>feat(core): opt-in gh CLI tracer + scm/tracker migration (#1238)</span></li>
+                  <li><code>dcfb6fe8</code><span>feat: add $schema support to agent-orchestrator.yaml (#1373)</span></li>
+                  <li><code>aa3342bb</code><span>perf(core): cache sessionManager.list() (#1113)</span></li>
+                  <li><code>2bfcbc64</code><span>refactor(web): break down DirectTerminal.tsx (#1448)</span></li>
+                  <li><code>eb7314b0</code><span>refactor(web): break down SessionDetail.tsx (#1449)</span></li>
+                  <li><code>e4706840</code><span>refactor(web): reconcile duplicate SessionDetailPRCard (#1442)</span></li>
+                  <li><code>0538e07b</code><span>Fix root dashboard project selection (#1480)</span></li>
+                  <li><code>b086908f</code><span>add zsh completion support for ao (#1374)</span></li>
+                  <li><code>84cd105c</code><span>feat(web): enable tmux status bar in web terminal (#1470)</span></li>
+                  <li><code>… and ~13 more upstream commits</code><span></span></li>
+                </ul>
+              </details>
+            </article>
+
+          </div>
+        </section>
+      </div>
 
       <footer>
         Corrected after <code>git fetch upstream</code> and generated from
@@ -1334,5 +1842,27 @@
         <code>/Users/harshitsinghbhandari/Downloads/side-quests/agent-orchestrator</code>.
       </footer>
     </main>
+    <script>
+      (() => {
+        const tabs = document.querySelectorAll(".tabs button[data-tab-target]");
+        const panels = document.querySelectorAll(".tab-panel[data-tab]");
+        tabs.forEach((tab) => {
+          tab.addEventListener("click", () => {
+            const target = tab.getAttribute("data-tab-target");
+            tabs.forEach((t) =>
+              t.setAttribute("aria-selected", t === tab ? "true" : "false"),
+            );
+            panels.forEach((panel) => {
+              if (panel.getAttribute("data-tab") === target) {
+                panel.removeAttribute("hidden");
+              } else {
+                panel.setAttribute("hidden", "");
+              }
+            });
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          });
+        });
+      })();
+    </script>
   </body>
 </html>
