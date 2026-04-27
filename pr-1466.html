@@ -963,46 +963,33 @@
           </p>
         </div>
 
-        <div class="grid">
-          <article class="panel">
-            <span class="tag green">New system</span>
-            <h3><code>generateExternalId(path, originUrl?)</code></h3>
-            <div class="compare">
-              <div class="side">
-                <b>Before, upstream/main</b>
-                <ul>
-                  <li>Project ID was a bare basename: <code>agent-orchestrator</code></li>
-                  <li>Collisions between same-name repos required manual suffix (<code>-1</code>, <code>-2</code>)</li>
-                  <li>Storage key was a 12-char SHA-256 of config directory</li>
-                  <li>Re-cloning the same repo produced a different storage key</li>
-                </ul>
-              </div>
-              <div class="side">
-                <b>After, PR head</b>
-                <ul>
-                  <li>Format: <code>{sanitized_basename}_{SHA256(path+originUrl)[0:10]}</code></li>
-                  <li>Example: <code>agent-orchestrator_a1b2c3d4e5</code></li>
-                  <li>Deterministic: same path + origin always produces the same ID</li>
-                  <li>Collision throws instead of silently degrading</li>
-                  <li>Basename capped at 30 chars, parsed via <code>id.match(/^(.+)_([0-9a-f]{10})$/)</code></li>
-                </ul>
-              </div>
-            </div>
-          </article>
+        <article class="panel">
+          <span class="tag green">New system</span>
+          <h3><code>generateExternalId(path, originUrl?)</code></h3>
+          <ul>
+            <li>Format: <code>{sanitized_basename}_{SHA256(path+originUrl)[0:10]}</code></li>
+            <li>Example: <code>agent-orchestrator_a1b2c3d4e5</code></li>
+            <li>Deterministic &mdash; same path + origin always produces the same ID.</li>
+            <li>Collision throws instead of silently degrading.</li>
+            <li>Basename capped at 30 chars; parsed via <code>id.match(/^(.+)_([0-9a-f]{10})$/)</code>.</li>
+          </ul>
+          <p class="note" style="margin-top: 14px;">
+            Replaces bare basenames (e.g. <code>agent-orchestrator</code>) and the 12-char SHA-256 storage key from <code>upstream/main</code>. Same-name repos no longer need manual <code>-1</code> / <code>-2</code> suffixes, and re-cloning the same repo no longer produces a different storage key.
+          </p>
+        </article>
 
-          <article class="panel">
-            <span class="tag red">Removed</span>
-            <h3>storageKey system fully removed</h3>
-            <ul>
-              <li><code>ensureProjectStorageIdentity</code> &mdash; removed</li>
-              <li><code>relinkProjectInGlobalConfig</code> &mdash; removed</li>
-              <li><code>deriveProjectStorageIdentity</code> &mdash; removed</li>
-              <li><code>findStorageKeyOwner</code>, <code>StorageKeyCollisionError</code> &mdash; removed</li>
-              <li><code>storageKey</code> kept as optional schema field until <code>ao migrate-storage</code> strips it</li>
-              <li><code>registerProjectInGlobalConfig</code> now returns the effective hashed project ID</li>
-            </ul>
-          </article>
-        </div>
+        <article class="panel" style="margin-top: 18px;">
+          <span class="tag red">Removed</span>
+          <h3>storageKey system fully removed</h3>
+          <ul>
+            <li><code>ensureProjectStorageIdentity</code></li>
+            <li><code>relinkProjectInGlobalConfig</code></li>
+            <li><code>deriveProjectStorageIdentity</code></li>
+            <li><code>findStorageKeyOwner</code>, <code>StorageKeyCollisionError</code></li>
+            <li><code>storageKey</code> kept as optional schema field until <code>ao migrate-storage</code> strips it.</li>
+            <li><code>registerProjectInGlobalConfig</code> now returns the effective hashed project ID.</li>
+          </ul>
+        </article>
       </section>
 
       <section aria-labelledby="migration">
