@@ -591,12 +591,11 @@
       <section class="hero" aria-labelledby="title">
         <div class="hero-card">
           <p class="kicker">PR #1466 board brief</p>
-          <h1 id="title">Storage V2 lands with migration tooling and broader stop recovery.</h1>
+          <h1 id="title">Storage V2 lands with hashed identity, migration tooling, and broader stop recovery.</h1>
           <p class="subtitle">
-            Corrected comparison after fetching remotes:
-            <code>upstream/main..HEAD</code>. Base is fetched <code>upstream/main</code>
-            at <code>836ff6ee</code>; PR head is local <code>storage-redesign</code>
-            at <code>65875bd9</code>.
+            Replaces hash-based storage with <code>projects/{projectId}</code>, introduces
+            deterministic hashed project IDs, removes the storageKey system, adds crash-safe
+            migration with rollback, and makes <code>ao stop</code>/<code>ao start</code> recoverable.
           </p>
           <div class="chips" aria-label="Compared refs">
             <span class="chip">Base: upstream/main</span>
@@ -609,9 +608,9 @@
           <div>
             <h2>Executive readout</h2>
             <p>
-              The PR adds the storage redesign rather than removing it. It introduces JSON metadata,
-              <code>projects/{projectId}</code> storage, a migration/rollback command, and a
-              restore-on-next-start flow after <code>ao stop</code>.
+              Introduces JSON metadata, <code>projects/{projectId}</code> storage with deterministic
+              hashed IDs, a crash-safe migration/rollback command, archiving removal, and a
+              restore-on-next-start flow after <code>ao stop</code>. Fully removes the storageKey system.
             </p>
           </div>
           <div class="metrics">
@@ -752,9 +751,60 @@
         </div>
       </section>
 
+      <section aria-labelledby="identity">
+        <div class="section-head">
+          <h2 id="identity">3. Hashed Project Identity</h2>
+          <p class="note">
+            Project IDs become deterministic hashes instead of bare basenames,
+            eliminating collisions across checkouts of the same repo.
+          </p>
+        </div>
+
+        <div class="grid">
+          <article class="panel">
+            <span class="tag green">New system</span>
+            <h3><code>generateExternalId(path, originUrl?)</code></h3>
+            <div class="compare">
+              <div class="side">
+                <b>Before, upstream/main</b>
+                <ul>
+                  <li>Project ID was a bare basename: <code>agent-orchestrator</code></li>
+                  <li>Collisions between same-name repos required manual suffix (<code>-1</code>, <code>-2</code>)</li>
+                  <li>Storage key was a 12-char SHA-256 of config directory</li>
+                  <li>Re-cloning the same repo produced a different storage key</li>
+                </ul>
+              </div>
+              <div class="side">
+                <b>After, PR head</b>
+                <ul>
+                  <li>Format: <code>{sanitized_basename}_{SHA256(path+originUrl)[0:10]}</code></li>
+                  <li>Example: <code>agent-orchestrator_a1b2c3d4e5</code></li>
+                  <li>Deterministic: same path + origin always produces the same ID</li>
+                  <li>Collision throws instead of silently degrading</li>
+                  <li>Basename capped at 30 chars, parsed via <code>id.match(/^(.+)_([0-9a-f]{10})$/)</code></li>
+                </ul>
+              </div>
+            </div>
+          </article>
+
+          <article class="panel">
+            <span class="tag red">Removed</span>
+            <h3>storageKey system fully removed</h3>
+            <ul>
+              <li><code>ensureProjectStorageIdentity</code> &mdash; removed</li>
+              <li><code>relinkProjectInGlobalConfig</code> &mdash; removed</li>
+              <li><code>deriveProjectStorageIdentity</code> &mdash; removed</li>
+              <li><code>findStorageKeyOwner</code>, <code>StorageKeyCollisionError</code> &mdash; removed</li>
+              <li><code>storageKey</code> kept as optional schema field until <code>ao migrate-storage</code> strips it</li>
+              <li><code>registerProjectInGlobalConfig</code> now returns the effective hashed project ID</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
       <section aria-labelledby="migration">
         <div class="section-head">
-          <h2 id="migration">3. migrate-storage</h2>
+          <h2 id="migration">4. migrate-storage</h2>
           <p class="note">
             In the corrected diff, <code>migrate-storage</code> is introduced, not removed.
           </p>
@@ -782,7 +832,7 @@
             <div class="step">
               <span class="num">4</span>
               <b>Rollback</b>
-              <span>Supports <code>--rollback</code> by restoring <code>*.migrated</code> directories.</span>
+              <span>Supports <code>--rollback</code> by restoring <code>*.migrated</code> directories and repairing git worktree references.</span>
             </div>
           </div>
           <div class="compare">
@@ -805,11 +855,39 @@
             </div>
           </div>
         </article>
+
+        <article class="panel" style="margin-top: 18px">
+          <span class="tag green">Safety hardening</span>
+          <h3>Migration crash safety and concurrency fixes</h3>
+          <p>Five post-review fixes applied to make the migration safe for production data:</p>
+          <div class="flow">
+            <div class="step">
+              <span class="num">1</span>
+              <b>Atomic writes</b>
+              <span>All session JSON writes use <code>atomicWriteFileSync</code>. Crash mid-write no longer truncates files.</span>
+            </div>
+            <div class="step">
+              <span class="num">2</span>
+              <b>Config lock</b>
+              <span><code>stripStorageKeysFromConfig</code> wrapped in <code>withFileLockSync</code>. No more race with concurrent <code>ao start</code>.</span>
+            </div>
+            <div class="step">
+              <span class="num">3</span>
+              <b>macOS collision</b>
+              <span>Case-insensitive projectId collision detection prevents silent data merge on HFS+/APFS.</span>
+            </div>
+            <div class="step">
+              <span class="num">4</span>
+              <b>Partial failure</b>
+              <span>Stray worktree moves skip failed projects. Rollback calls <code>repairGitWorktrees</code>.</span>
+            </div>
+          </div>
+        </article>
       </section>
 
       <section aria-labelledby="storage-layout">
         <div class="section-head">
-          <h2 id="storage-layout">4. Storage Layout: Before vs Now</h2>
+          <h2 id="storage-layout">5. Storage Layout: Before vs Now</h2>
           <p class="note">
             This is the architectural center of the PR: AO moves from storage-key/hash buckets
             to stable project directories with JSON session metadata.
@@ -948,7 +1026,7 @@
 
       <section aria-labelledby="ux">
         <div class="section-head">
-          <h2 id="ux">5. UX Changes</h2>
+          <h2 id="ux">6. UX Changes</h2>
           <p class="note">
             The PR exposes the storage-redesign workflow through CLI, dashboard, and project settings.
           </p>
@@ -1003,12 +1081,39 @@
               derived from lifecycle where possible.
             </p>
           </article>
+          <article class="panel">
+            <span class="tag red">Bug fix</span>
+            <h3>Orchestrator tmux double-prefix</h3>
+            <p>
+              <code>getOrchestratorSessionId()</code> already returns <code>{prefix}-orchestrator</code>.
+              The spawn path was prepending the prefix again, producing <code>ao-ao-orchestrator</code>.
+              Fixed to use <code>sessionId</code> directly as the tmux name.
+            </p>
+          </article>
+          <article class="panel">
+            <span class="tag green">Worktree routing</span>
+            <h3>Plugin routes to V2 layout</h3>
+            <p>
+              Added <code>worktreeDir</code> to <code>WorkspaceCreateConfig</code>.
+              Session manager passes <code>getProjectWorktreesDir(projectId)</code> at all 3 spawn/restore sites,
+              routing worktrees to <code>projects/{id}/worktrees/</code> instead of <code>~/.worktrees/</code>.
+            </p>
+          </article>
+          <article class="panel">
+            <span class="tag red">Archiving removed</span>
+            <h3>No more archive/ directory</h3>
+            <p>
+              Killed/terminated sessions stay as JSON metadata in <code>sessions/</code> with a terminal
+              lifecycle state. The <code>archive/</code> directory concept, <code>deleteMetadata</code> archiving,
+              and archive path functions are fully removed.
+            </p>
+          </article>
         </div>
       </section>
 
       <section aria-labelledby="loc">
         <div class="section-head">
-          <h2 id="loc">6. LOC Change Overview</h2>
+          <h2 id="loc">7. LOC Change Overview</h2>
           <p class="note">
             Fetched comparison: <code>git diff --shortstat upstream/main..HEAD</code>.
           </p>
@@ -1067,30 +1172,35 @@
         <div class="summary">
           <div>
             <span class="tag green">Overall summary</span>
-            <h2 id="summary">This PR ships the storage redesign and its operational bridge.</h2>
+            <h2 id="summary">This PR ships the storage redesign, hashed identity, and migration safety.</h2>
             <p>
-              The PR moves AO from storage-key based flat metadata toward project-scoped JSON
-              storage, adds a migration and rollback command, and changes stop/start behavior so
-              stopped active sessions can be recovered. It also expands status reporting with
-              agent report history and adjusts project UX around the new identity model.
+              The PR moves AO from storage-key based flat metadata to project-scoped JSON
+              storage with deterministic hashed project IDs. It removes the entire storageKey system,
+              removes archiving (terminated sessions stay visible), adds a crash-safe migration command
+              with rollback, and makes stop/start recoverable. Fixes the orchestrator tmux double-prefix
+              bug and routes worktrees to the V2 layout.
             </p>
           </div>
           <div class="verdict">
             <div class="verdict-item">
               <b>Strategic direction</b>
-              <span>Adopts V2 storage: <code>projects/{projectId}</code>, JSON metadata, lifecycle-centered status.</span>
+              <span>Adopts V2 storage: <code>projects/{projectId}</code>, JSON metadata, lifecycle-centered status. Removes the entire storageKey system.</span>
+            </div>
+            <div class="verdict-item">
+              <b>Identity model</b>
+              <span>Hashed project IDs (<code>{basename}_{hash}</code>) replace bare basenames. Deterministic, collision-safe, no manual suffixes.</span>
             </div>
             <div class="verdict-item">
               <b>User impact</b>
-              <span><code>ao stop</code> is more aggressive, but <code>ao start</code> can restore what it stopped.</span>
+              <span><code>ao stop</code> is more aggressive, but <code>ao start</code> can restore what it stopped. Archiving removed &mdash; terminated sessions stay visible.</span>
             </div>
             <div class="verdict-item">
-              <b>Migration story</b>
-              <span>Includes dry run, force, crash marker behavior, old-directory preservation, and rollback.</span>
+              <b>Migration safety</b>
+              <span>Atomic writes, file-locked config updates, macOS case-insensitive collision detection, git worktree repair in rollback, partial-failure isolation.</span>
             </div>
             <div class="verdict-item">
-              <b>Risk to watch</b>
-              <span>Storage migrations are high blast-radius; validate active-session guards, rollback, archive flattening, and cross-project collisions.</span>
+              <b>Bug fixes</b>
+              <span>Orchestrator tmux double-prefix (<code>ao-ao-orchestrator</code>), worktree routing to V2 layout, merge conflict resolution with upstream PRs #1373 and #1302.</span>
             </div>
           </div>
         </div>
