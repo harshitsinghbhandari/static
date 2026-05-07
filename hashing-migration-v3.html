@@ -725,12 +725,14 @@
 
           <article class="panel">
             <span class="tag blue">Orchestrator session</span>
-            <h3><code>{sessionPrefix}-orchestrator</code> + numeric suffix on collision</h3>
+            <h3><code>{sessionPrefix}-orchestrator</code> — exactly that, no suffix</h3>
             <ul>
-              <li>Singleton per project. Branch is <code>orchestrator/{sessionId}</code>.</li>
-              <li>Detection regex: <code>^{prefix}-orchestrator-\d+$</code> for re-spawned orchestrators.</li>
+              <li>Singleton per project. Live name is always <code>{prefix}-orchestrator</code>; branch is <code>orchestrator/{prefix}-orchestrator</code>.</li>
+              <li>V3 detection regex: <code>^{prefix}-orchestrator$</code>. No numeric tail.</li>
+              <li>Re-spawn flow: archive the dead orchestrator first (move JSON to <code>archive/</code> with a timestamp), then create a fresh <code>{prefix}-orchestrator</code>. The archive carries the timestamp; the live record never does.</li>
+              <li>Today's code allows <code>{prefix}-orchestrator-\d+$</code> at <code>session-manager.ts:413-431</code> precisely because re-spawn doesn't archive atomically; the user's disk has <code>orchestrator-prompt-ao-orchestrator-{1..8}.md</code> as evidence (8 re-incarnations, 1 live).</li>
             </ul>
-            <p class="loc">core/src/session-manager.ts:413-431, 1513</p>
+            <p class="loc">core/src/session-manager.ts:413-431, 1513 (current); migration normalizes per §13</p>
           </article>
         </div>
       </section>
@@ -1456,8 +1458,14 @@ if (existingPrefixes.has(prefix)) {
               <tr>
                 <td>3b — Branch name</td>
                 <td><code>branch</code></td>
-                <td><code>session/{sessionId}</code> (worker), <code>orchestrator/{sessionId}</code> (orchestrator), or tracker-supplied if branch-safe.</td>
+                <td><code>session/{sessionId}</code> (worker), <code>orchestrator/{prefix}-orchestrator</code> (orchestrator — singleton, never suffixed), or tracker-supplied if branch-safe.</td>
                 <td>git.</td>
+              </tr>
+              <tr>
+                <td>3d — Orchestrator</td>
+                <td><code>sessionId</code></td>
+                <td>Always <code>{prefix}-orchestrator</code>. Singleton. No numeric suffix; re-spawn archives the dead one to <code>archive/{prefix}-orchestrator_{ts}.json</code> first, then re-creates the same name.</td>
+                <td><code>orchestrator.json</code>.</td>
               </tr>
               <tr>
                 <td>3c — Worktree path</td>
@@ -1479,6 +1487,33 @@ if (existingPrefixes.has(prefix)) {
               </tr>
             </tbody>
           </table>
+        </article>
+
+        <article class="panel" style="margin-top: 18px;">
+          <span class="tag gold">Cross-cutting rule</span>
+          <h3>One function per derivation — no exceptions</h3>
+          <p>
+            For any value the system derives — a hash, a project ID, a session ID, a
+            tmux name, a prefix on collision — there is <strong>exactly one function</strong>
+            in the codebase that produces it. Two functions doing the same job is the
+            class of bug behind the <code>ao</code>/<code>ao2</code> incident, the
+            <code>generateConfigHash</code>/<code>generateExternalId</code> tension, and
+            the four-allocator prefix mess.
+          </p>
+          <p><b>Concrete corollaries this proposal enforces:</b></p>
+          <ul>
+            <li><b>One project-ID hash:</b> <code>generateExternalId(path, originUrl)</code>. <code>generateConfigHash</code> goes away with the observability move; <code>deriveStorageKey</code> gets deleted. After V3, <em>nothing</em> in the codebase produces an identity hash except <code>generateExternalId</code>.</li>
+            <li><b>One prefix allocator:</b> <code>deriveAvailableSessionPrefix</code> in <code>global-config.ts</code>. The three competing schemes in <code>start.ts</code> are deleted; callers stop pre-computing.</li>
+            <li><b>One session-ID allocator:</b> the counter file. The remote-scan in <code>session-manager.ts</code> becomes a reconciler-only path, never a primary allocator.</li>
+            <li><b>One tmux-name function:</b> <code>generateSessionName(prefix, num) = ${prefix}-${num}</code>. The two deprecated paths (<code>generateTmuxName</code>, the legacy storageKey-prefixed format) are deleted.</li>
+            <li><b>Different jobs ≠ duplication.</b> <code>hashEvidence</code> (lifecycle dedupe) and the feedback dedupe key are different functions because they answer different questions. HMAC signing is different again. The rule is "one function per <em>derivation</em>," not "one hash function in the project."</li>
+          </ul>
+          <p class="note" style="margin-top: 12px;">
+            Encoded as a lint rule? Hard to mechanize. Encoded as a code-review checklist
+            item: yes, easy. Add it to <code>CONTRIBUTING.md</code>: "if you're about to
+            write a new hash, check whether the existing one fits — and if it doesn't,
+            explain in the PR description why."
+          </p>
         </article>
 
         <article class="panel" style="margin-top: 18px;">
@@ -1691,6 +1726,16 @@ if (existingPrefixes.has(prefix)) {
     ao-ao-orchestrator → ao-orchestrator    (kill + restart on new name)
     13 others already match {prefix}-{N} format → no-op.
 
+  Orchestrator normalization (one per project, no numeric suffix):
+    agent-orchestrator/sessions/ao-orchestrator-1.json … ao-orchestrator-7.json
+      → archive/ao-orchestrator-1_{ts}.json … ao-orchestrator-7_{ts}.json (already there)
+    agent-orchestrator/orchestrator.json (latest live)
+      → keep as orchestrator.json with sessionId="ao-orchestrator", strip suffix
+    agent-orchestrator/prompts/orchestrator-prompt-ao-orchestrator-{1..8}.md
+      → consolidate to single orchestrator-prompt-ao-orchestrator.md
+    agent-orchestrator_168566536d/orchestrator.json (sessionId=ao2-orchestrator)
+      → kept; folds into the merge above
+
   Worktrees to adopt:
     ~/.worktrees/agent-orchestrator/ao-101 → projects/{newId}/worktrees/ao-101
 
@@ -1765,6 +1810,11 @@ if (existingPrefixes.has(prefix)) {
               <span class="num">8</span>
               <b>Adopt stranded worktrees</b>
               <span>For each <code>~/.worktrees/{name}/{sid}</code>: find session JSON whose <code>branch</code> matches; <code>renameSync</code> into <code>projects/{newId}/worktrees/{sid}</code>; rewrite <code>workspacePath</code>; run <code>git worktree repair</code>.</span>
+            </div>
+            <div class="step">
+              <span class="num">8b</span>
+              <b>Normalize orchestrators (one per project, no suffix)</b>
+              <span>For each project: scan <code>sessions/{prefix}-orchestrator*.json</code> + the legacy <code>orchestrator.json</code>. Pick the most recent live one (by <code>lifecycle.session.lastTransitionAt</code>) as the canonical <code>orchestrator.json</code> with <code>sessionId={prefix}-orchestrator</code>. Move all others to <code>archive/{prefix}-orchestrator_{ts}.json</code>. Consolidate prompt files: keep <code>prompts/orchestrator-prompt-{prefix}-orchestrator.md</code>, archive the rest. Detection regex tightens to <code>^{prefix}-orchestrator$</code>.</span>
             </div>
             <div class="step">
               <span class="num">9</span>
@@ -1845,10 +1895,65 @@ if (existingPrefixes.has(prefix)) {
         </article>
 
         <article class="panel" style="margin-top: 18px;">
+          <span class="tag green">Auto-run integration</span>
+          <h3>Wire <code>ao migrate</code> into <code>ao update</code> for v0.6.0</h3>
+          <p>
+            Users won't run <code>ao migrate</code> manually unless something breaks.
+            The fix has to land via the existing self-update path so installed bases
+            converge on V3 the moment they pick up v0.6.0.
+          </p>
+          <p><b>Hook point:</b> at the tail of <code>ao update</code>, after the new binary is in place but before the version banner prints.</p>
+          <pre class="tree">  $ ao update
+    ↓
+    1. Fetch latest release        → v0.6.0
+    2. Replace binary              → /usr/local/bin/ao
+    3. Run startup-preflight       → loads new code
+    4. Detect schema version       → reads ~/.agent-orchestrator/config.yaml schemaVersion
+       a. schemaVersion: 3         → skip (already migrated)
+       b. schemaVersion absent OR ≤2 → run `ao migrate` automatically
+    5. On migration success        → show "Updated to v0.6.0. Migrated identity to V3."
+    6. On migration failure        → show error + restore previous binary + abort update</pre>
+          <p><b>Why bundle into <code>ao update</code> (and not require a manual step):</b></p>
+          <ul>
+            <li><b>Schema-incompatible code can't run on V2 disk.</b> If v0.6.0 reads <code>identity.json</code> and the user's disk doesn't have one, every <code>ao</code> command breaks until migrate runs. Bundling makes the upgrade atomic from the user's perspective.</li>
+            <li><b>The migration is idempotent.</b> Re-running <code>ao migrate</code> on already-V3 disk is a no-op (Phase 1 finds nothing to do, exits clean). Safe to bake into update without guards beyond the schemaVersion check.</li>
+            <li><b>Failure is recoverable.</b> If migrate fails, <code>ao update</code> restores the previous binary from its backup and aborts. The user is back where they started, with a clear error pointing at the migration record. They can investigate and re-attempt with <code>ao migrate</code> directly, or roll back the schema version pre-binary-replace if needed.</li>
+          </ul>
+          <p><b>Code shape (sketch, lives in <code>cli/src/commands/update.ts</code>):</b></p>
+          <pre class="tree">  // After binary swap, before announcing success:
+  const cfg = loadGlobalConfigRaw();
+  if ((cfg?.schemaVersion ?? 1) < 3) {
+    console.log(chalk.dim("Migrating identity to V3..."));
+    try {
+      await runMigrate({ auto: true, force: false });
+    } catch (err) {
+      console.error(chalk.red("Migration failed:"), err);
+      console.error(chalk.yellow("Rolling back binary to previous version."));
+      await restorePreviousBinary();
+      process.exit(1);
+    }
+  }
+  console.log(chalk.green(`✓ Updated to ${newVersion}.`));</pre>
+          <p><b>What "auto-mode" changes about <code>ao migrate</code>:</b></p>
+          <ul>
+            <li><code>--auto</code> flag suppresses the same-repo merge prompt; defaults to "keep both projects, no merge." User can run <code>ao migrate</code> manually later if they want to merge.</li>
+            <li><code>--auto</code> still respects the working-session refusal; if the user has live sessions, the update aborts with a clear "stop sessions and re-run <code>ao update</code>" message.</li>
+            <li>Otherwise identical to manual invocation. Same plan, same phases, same record file.</li>
+          </ul>
+          <p class="note" style="margin-top: 12px;">
+            <strong>Versioning note:</strong> v0.6.0 is the V3 introduction. Future
+            schema bumps (V4, V5) follow the same pattern: bundle the migrator into
+            <code>ao update</code>, gate by <code>schemaVersion</code>, idempotent re-run.
+            The machinery built for V3 is the machinery for every subsequent migration.
+          </p>
+        </article>
+
+        <article class="panel" style="margin-top: 18px;">
           <span class="tag blue">Edge cases handled</span>
           <h3>What this catches that <code>migrate-storage</code> didn't</h3>
           <ul>
             <li><b>Stuck orchestrators</b> with legacy tmux names in metadata (the user's <code>orchestrator.json</code> from §7).</li>
+            <li><b>Numbered orchestrator survivors</b> (<code>ao-orchestrator-1</code> through <code>-7</code> on the user's disk) — Phase 8b picks the most recent live one as canonical, archives the rest, drops the suffix forever.</li>
             <li><b>Doubled-prefix tmux names</b> like <code>ao-ao-orchestrator</code> — Phase 7 renames live and Phase 6 fixes metadata.</li>
             <li><b>Orphan worktrees</b> at <code>~/.worktrees/</code> — Phase 8 adopts them.</li>
             <li><b>Observability directory leak</b> — Phase 9 attributes by reading the obs JSON's own <code>projectId</code> field.</li>
@@ -2014,8 +2119,9 @@ if (existingPrefixes.has(prefix)) {
           <p><b>Why a separate <code>orchestrator.json</code> instead of treating it as just another session:</b></p>
           <ul>
             <li>Singleton per project — different lifecycle, different recovery semantics (<code>orchestratorSessionStrategy: "delete"</code> vs sessions which archive).</li>
-            <li>Different prompt template (<code>orchestrator-prompt-{sessionId}.md</code> vs <code>worker-prompt-{sessionId}.md</code>).</li>
-            <li>Re-spawn on terminal failure: an orchestrator at state <code>terminated</code> gets re-incarnated as <code>{prefix}-orchestrator-2</code>; sessions don't.</li>
+            <li>Different prompt template (<code>orchestrator-prompt-{prefix}-orchestrator.md</code> vs <code>worker-prompt-{sessionId}.md</code>).</li>
+            <li><b>Re-spawn never numbers.</b> When the orchestrator dies, the <em>archive step is atomic and runs first</em>: <code>orchestrator.json</code> moves to <code>archive/{prefix}-orchestrator_{ts}.json</code>, then a new <code>orchestrator.json</code> is created with the same <code>sessionId={prefix}-orchestrator</code>. No <code>-2</code>, <code>-3</code> suffixes ever land on a live record. The detection regex collapses from <code>^{prefix}-orchestrator(?:-\d+)?$</code> to <code>^{prefix}-orchestrator$</code>.</li>
+            <li><b>Why this is safe:</b> sessionPrefix is unique per project (Layer 1 invariant). One project owns one prefix. One prefix produces one orchestrator name. Therefore: one orchestrator per project, full stop. The numeric suffix machinery in today's code only existed because re-spawn wasn't archive-first, not because we ever needed two simultaneously.</li>
           </ul>
           <p><b>What's fixed from the user's actual disk</b> (the §7 smoking artefact): the legacy
             <code>tmuxName: "66c66786e971-agent-orchestrator-ao-orchestrator-8"</code> and the
