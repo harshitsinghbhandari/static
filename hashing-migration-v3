@@ -1,0 +1,2378 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Hashes in Agent Orchestrator — A Field Map</title>
+    <style>
+      :root {
+        --ink: #17211d;
+        --muted: #66736d;
+        --paper: #f7f0e3;
+        --panel: #fffdf8;
+        --line: #d9cdb7;
+        --green: #176b48;
+        --green-soft: #dceee4;
+        --blue: #275d8f;
+        --blue-soft: #deebf6;
+        --red: #9c412f;
+        --red-soft: #f4ded6;
+        --gold: #a87316;
+        --gold-soft: #f3e4bf;
+        --shadow: 0 24px 70px rgba(36, 28, 18, 0.14);
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 16% 8%, rgba(23, 107, 72, 0.16), transparent 32rem),
+          radial-gradient(circle at 86% 2%, rgba(39, 93, 143, 0.13), transparent 31rem),
+          linear-gradient(135deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 38%),
+          var(--paper);
+        font-family: "Avenir Next", "Segoe UI", "Helvetica Neue", sans-serif;
+        line-height: 1.45;
+      }
+
+      body::before {
+        content: "";
+        pointer-events: none;
+        position: fixed;
+        inset: 0;
+        opacity: 0.18;
+        background-image:
+          linear-gradient(rgba(23, 33, 29, 0.05) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(23, 33, 29, 0.045) 1px, transparent 1px);
+        background-size: 30px 30px;
+        mask-image: linear-gradient(to bottom, black, transparent 78%);
+      }
+
+      main {
+        position: relative;
+        max-width: 1220px;
+        margin: 0 auto;
+        padding: 44px 28px 72px;
+      }
+
+      .panel, .hero-card, .brief, .matrix, .summary {
+        background: rgba(255, 253, 248, 0.88);
+        border: 1px solid rgba(92, 76, 48, 0.24);
+        border-radius: 10px;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(18px);
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.18fr) 390px;
+        gap: 24px;
+        align-items: stretch;
+      }
+
+      .hero-card {
+        position: relative;
+        overflow: hidden;
+        min-height: 450px;
+        padding: 44px;
+      }
+
+      .hero-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(90deg, transparent 0 67%, rgba(23, 107, 72, 0.12) 67% 68%, transparent 68%),
+          linear-gradient(0deg, transparent 0 77%, rgba(168, 115, 22, 0.12) 77% 78%, transparent 78%);
+      }
+
+      .hero-card > * { position: relative; z-index: 1; }
+
+      .kicker {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0 0 34px;
+        color: var(--green);
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .kicker::before {
+        content: "";
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--green);
+      }
+
+      h1, h2, h3 {
+        margin: 0;
+        font-family: Georgia, "Times New Roman", serif;
+        font-weight: 500;
+        letter-spacing: 0;
+      }
+
+      h1 {
+        max-width: 820px;
+        font-size: clamp(40px, 6.2vw, 76px);
+        line-height: 0.96;
+      }
+
+      .subtitle {
+        max-width: 730px;
+        margin: 28px 0 0;
+        color: #44514b;
+        font-size: 19px;
+      }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 34px;
+      }
+
+      code, .chip {
+        font-family: "SFMono-Regular", Consolas, monospace;
+      }
+
+      code {
+        padding: 2px 5px;
+        border-radius: 5px;
+        background: rgba(23, 33, 29, 0.08);
+      }
+
+      .chip {
+        display: inline-flex;
+        min-height: 34px;
+        align-items: center;
+        padding: 8px 12px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.54);
+        color: #39463f;
+        font-size: 12px;
+      }
+
+      .brief {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 28px;
+      }
+
+      .brief h2 { font-size: 22px; margin-bottom: 12px; }
+
+      .brief p, .note, .panel p, .summary p {
+        color: #44514b;
+        font-size: 15px;
+      }
+
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
+        margin-top: 18px;
+      }
+
+      .metric {
+        padding: 14px 16px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.6);
+        border: 1px solid var(--line);
+      }
+
+      .metric strong {
+        display: block;
+        font-size: 26px;
+        font-family: Georgia, serif;
+        color: var(--ink);
+      }
+
+      .metric span {
+        display: block;
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 12px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      section { margin-top: 56px; }
+
+      .section-head {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 22px;
+      }
+
+      .section-head h2 {
+        font-size: clamp(28px, 3.4vw, 40px);
+      }
+
+      .note { max-width: 880px; }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+      }
+
+      .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+      .panel {
+        padding: 22px 24px;
+      }
+
+      .panel h3 { font-size: 20px; margin: 6px 0 12px; }
+
+      .tag {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .tag.green { background: var(--green-soft); color: var(--green); }
+      .tag.blue { background: var(--blue-soft); color: var(--blue); }
+      .tag.red { background: var(--red-soft); color: var(--red); }
+      .tag.gold { background: var(--gold-soft); color: var(--gold); }
+
+      .compare {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        margin-top: 14px;
+      }
+
+      .side {
+        padding: 14px 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.5);
+      }
+
+      .side b { display: block; margin-bottom: 6px; font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+      .side ul { margin: 0; padding-left: 18px; font-size: 14px; color: #39463f; }
+      .side li { margin: 4px 0; }
+
+      .matrix {
+        padding: 22px 24px;
+        margin-top: 18px;
+      }
+
+      .matrix h3 { font-size: 20px; margin-bottom: 14px; }
+
+      .matrix table { width: 100%; border-collapse: collapse; font-size: 14px; }
+      .matrix th, .matrix td {
+        text-align: left;
+        padding: 10px 12px;
+        vertical-align: top;
+        border-bottom: 1px solid var(--line);
+      }
+      .matrix th {
+        font-family: Georgia, serif;
+        font-weight: 500;
+        color: var(--muted);
+        font-size: 13px;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+
+      .flow {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 14px;
+        margin-top: 14px;
+      }
+
+      .step {
+        padding: 14px 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.55);
+        position: relative;
+      }
+
+      .num {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 26px; height: 26px;
+        border-radius: 50%;
+        background: var(--green);
+        color: var(--paper);
+        font-family: Georgia, serif;
+        font-size: 14px;
+        margin-bottom: 8px;
+      }
+
+      .step b { display: block; font-size: 15px; margin-bottom: 4px; }
+      .step span:not(.num) { color: #44514b; font-size: 13.5px; }
+
+      .ledger {
+        display: grid;
+        grid-template-columns: 0.55fr 1fr 1fr;
+        border-top: 1px solid var(--line);
+      }
+      .ledger > div {
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--line);
+        font-size: 14px;
+      }
+      .ledger > div:nth-child(-n + 3) {
+        background: rgba(168, 115, 22, 0.08);
+        font-family: Georgia, serif;
+        color: var(--muted);
+        text-transform: uppercase;
+        font-size: 12px;
+        letter-spacing: 0.05em;
+      }
+      .ledger > div:nth-child(3n + 1) { font-weight: 700; }
+
+      pre.tree {
+        margin: 12px 0 0;
+        padding: 14px 16px;
+        background: rgba(23, 33, 29, 0.06);
+        border-radius: 8px;
+        font-size: 13px;
+        line-height: 1.5;
+        overflow-x: auto;
+      }
+
+      .storage-map {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+      }
+
+      .summary {
+        padding: 28px 30px;
+        margin-top: 56px;
+      }
+
+      .summary h2 { font-size: 30px; margin-bottom: 14px; }
+
+      .verdict {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 14px;
+        margin-top: 16px;
+      }
+
+      .verdict-item {
+        padding: 14px 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.55);
+      }
+
+      .verdict-item b { display: block; margin-bottom: 6px; }
+      .verdict-item span { font-size: 13.5px; color: #44514b; }
+
+      .loc {
+        font-size: 12px;
+        color: var(--muted);
+        font-family: "SFMono-Regular", Consolas, monospace;
+      }
+
+      .reviewed-by {
+        margin: 0 0 14px;
+        color: var(--muted);
+        font-size: 12px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .tabs {
+        display: flex;
+        gap: 8px;
+        margin: 36px 0 28px;
+        padding: 6px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: rgba(255, 253, 248, 0.7);
+        backdrop-filter: blur(12px);
+        width: fit-content;
+        position: sticky;
+        top: 16px;
+        z-index: 10;
+        box-shadow: 0 4px 24px rgba(36, 28, 18, 0.06);
+      }
+
+      .tabs button {
+        appearance: none;
+        border: 0;
+        background: transparent;
+        color: var(--muted);
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        padding: 9px 18px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 120ms ease, color 120ms ease;
+      }
+
+      .tabs button[aria-selected="true"] {
+        background: var(--ink);
+        color: var(--paper);
+        box-shadow: 0 4px 14px rgba(23, 33, 29, 0.18);
+      }
+
+      .tabs button:not([aria-selected="true"]):hover {
+        background: rgba(23, 33, 29, 0.06);
+        color: var(--ink);
+      }
+
+      .tabs .tab-count {
+        display: inline-block;
+        margin-left: 8px;
+        padding: 1px 7px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.18);
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .tabs button:not([aria-selected="true"]) .tab-count {
+        background: rgba(23, 33, 29, 0.08);
+        color: var(--muted);
+      }
+
+      .tab-panel[hidden] { display: none; }
+
+      .tab-panel { animation: fadeIn 220ms ease; }
+
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(6px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p class="reviewed-by">Field map · agent-orchestrator</p>
+
+      <section class="hero" aria-labelledby="title">
+        <div class="hero-card">
+          <p class="kicker">Hashes in AO</p>
+          <h1 id="title">Where the codebase hashes, where it counts, and why both are right.</h1>
+          <p class="subtitle">
+            AO uses SHA-256 in five small places — each chosen for collision avoidance
+            against an inherently unbounded input domain. Everywhere else, identifiers are
+            human-readable counters, slugs, or basenames, kept disambiguous by reservation,
+            atomic file creation, or remote ground truth.
+          </p>
+          <div class="chips" aria-label="Hash inventory">
+            <span class="chip">5 SHA-256 sites</span>
+            <span class="chip">1 MD5 site (compat)</span>
+            <span class="chip">1 HMAC-SHA256 (signing)</span>
+            <span class="chip">Hash lengths: 10 / 12 / 16 / 64</span>
+          </div>
+        </div>
+
+        <aside class="brief">
+          <div>
+            <h2>Reading guide</h2>
+            <p>
+              Each hash answers a different question. Some make a bounded namespace from
+              an unbounded one (project storage). Some dedupe (feedback reports). Some
+              fence off cache key collisions (gh wrapper). One mirrors a third-party tool
+              (kimi md5). The non-hash sites are louder than the hash sites — that's the
+              interesting part.
+            </p>
+          </div>
+          <div class="metrics">
+            <div class="metric"><strong>5</strong><span>identity hashes</span></div>
+            <div class="metric"><strong>10–16</strong><span>truncation chars</span></div>
+            <div class="metric"><strong>0</strong><span>random session IDs</span></div>
+            <div class="metric"><strong>1</strong><span>md5 compatibility shim</span></div>
+          </div>
+        </aside>
+      </section>
+
+      <div class="tabs" role="tablist" aria-label="Report sections">
+        <button type="button" role="tab" aria-selected="true" aria-controls="tab-survey" data-tab-target="survey">Survey<span class="tab-count">§1–5</span></button>
+        <button type="button" role="tab" aria-selected="false" aria-controls="tab-rca" data-tab-target="rca">RCA &amp; Forensics<span class="tab-count">§6–7</span></button>
+        <button type="button" role="tab" aria-selected="false" aria-controls="tab-fix" data-tab-target="fix">The Fix<span class="tab-count">§8–12</span></button>
+      </div>
+
+      <div class="tab-panel" id="tab-survey" data-tab="survey" role="tabpanel">
+
+      <section aria-labelledby="philosophy">
+        <div class="section-head">
+          <h2 id="philosophy">1. The Philosophy</h2>
+          <p class="note">
+            AO's identifier strategy follows one rule: hash only when the input domain is
+            unbounded and there is no human-friendly disambiguator that survives. Everywhere
+            a human will read or type the identifier — session IDs, branch names, tmux names —
+            keep it readable and resolve collisions by reservation rather than entropy.
+          </p>
+        </div>
+
+        <div class="grid">
+          <article class="panel">
+            <span class="tag green">Hash when</span>
+            <h3>The input is a path or URL</h3>
+            <ul>
+              <li>Filesystem paths can be arbitrarily long, contain spaces, slashes, unicode.</li>
+              <li>Origin URLs vary in scheme/host/punctuation for the same logical repo.</li>
+              <li>A 10–12 char SHA-256 prefix is short enough to embed in directory names and long enough to make practical collision irrelevant for one-user / one-machine scale.</li>
+              <li>Determinism matters: the same project must always resolve to the same on-disk slot across re-clones, re-registrations, and machine reboots.</li>
+            </ul>
+          </article>
+
+          <article class="panel">
+            <span class="tag blue">Don't hash when</span>
+            <h3>A human reads or types it</h3>
+            <ul>
+              <li>Session IDs (<code>ao-79</code>) appear in the dashboard, tmux, branch names, and PR titles.</li>
+              <li>Branch names land on GitHub and need to be readable in PR lists.</li>
+              <li>tmux session names are typed at the terminal during attach/kill.</li>
+              <li>Disambiguation here is solved by <em>reservation</em>: an atomic file lock on <code>sessions/{id}.json</code> + a remote <code>ls-remote</code> sweep.</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section aria-labelledby="map">
+        <div class="section-head">
+          <h2 id="map">2. The Hash Map — Every Site in the Repo</h2>
+          <p class="note">
+            Each row is a real <code>createHash</code> call, with the input it consumes,
+            the truncation length, and the reason for the choice.
+          </p>
+        </div>
+
+        <div class="matrix">
+          <h3>Where SHA-256 (and friends) actually run</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Site</th>
+                <th>Algorithm · length</th>
+                <th>Input</th>
+                <th>Why hash</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <b>Storage key (legacy)</b><br>
+                  <span class="loc">core/src/paths.ts:32-43 · core/src/config.ts:75-79</span>
+                </td>
+                <td>SHA-256 · 12 hex chars</td>
+                <td><code>dirname(realpath(configPath))</code> — the resolved project root</td>
+                <td>Multiple worktrees / checkouts of the same repo on one machine need disjoint storage. The path is the only thing guaranteed unique per checkout. 12 chars (48 bits) is collision-safe for hundreds of projects.</td>
+              </tr>
+              <tr>
+                <td>
+                  <b>External project ID (V2)</b><br>
+                  <span class="loc">core/src/global-config.ts:47-53</span>
+                </td>
+                <td>SHA-256 · 10 hex chars, suffix-style</td>
+                <td><code>resolve(projectPath) + ":" + (originUrl ?? "")</code></td>
+                <td>New project IDs are <code>{sanitized_basename}_{hash10}</code>. The basename keeps the ID readable; the hash suffix prevents collisions when two checkouts share a basename. Hash includes origin URL so a re-clone to the same path is stable.</td>
+              </tr>
+              <tr>
+                <td>
+                  <b>Storage key derivation (canonical)</b><br>
+                  <span class="loc">core/src/storage-key.ts:45-50</span>
+                </td>
+                <td>SHA-256 · 12 hex chars</td>
+                <td><code>normalizedOrigin + "#" + relativeSubdir</code></td>
+                <td>Origin-URL based, normalized (ssh→https, lowercased, trailing <code>.git</code> stripped) so the same logical repo always lands in the same slot regardless of clone-URL style.</td>
+              </tr>
+              <tr>
+                <td>
+                  <b>Lifecycle evidence dedupe</b><br>
+                  <span class="loc">core/src/lifecycle-status-decisions.ts:48-60</span>
+                </td>
+                <td>SHA-256 · 12 hex chars</td>
+                <td>Evidence string with <code>activity=…</code> and <code>at=…</code> stripped</td>
+                <td>The lifecycle counter must not reset when the same weak evidence re-presents with only timestamp churn. The hash is a cheap content-equality check across polling cycles.</td>
+              </tr>
+              <tr>
+                <td>
+                  <b>Feedback report dedupe key</b><br>
+                  <span class="loc">core/src/feedback-tools.ts:75-91</span>
+                </td>
+                <td>SHA-256 · 16 hex chars</td>
+                <td>Canonical JSON of <code>{tool, title, body, session, source, evidence[]}</code></td>
+                <td>Dedupes feedback submissions across runs. Evidence array is sorted before hashing for set-equality. 16 chars (64 bits) is wider than other sites because the keyspace is shared across all sessions, all time.</td>
+              </tr>
+              <tr>
+                <td>
+                  <b>kimicode session bucket</b><br>
+                  <span class="loc">plugins/agent-kimicode/src/session-discovery.ts:117-129</span>
+                </td>
+                <td><b>MD5</b> · full 32 hex chars</td>
+                <td><code>workspacePath</code></td>
+                <td>Not AO's choice — kimi itself stores sessions at <code>~/.kimi/sessions/&lt;md5(cwd)&gt;/&lt;uuid&gt;/</code>. AO mirrors the algorithm exactly to find them. Comment in <code>plugins/agent-kimicode/src/index.ts:135-141</code> warns that any cwd divergence (symlinks, worktrees) breaks discovery.</td>
+              </tr>
+              <tr>
+                <td>
+                  <b>gh wrapper cache key</b><br>
+                  <span class="loc">core/src/agent-workspace-hooks.ts:391-398</span>
+                </td>
+                <td>SHA-256 · 16 hex chars (via <code>shasum</code>)</td>
+                <td><code>"pr-discovery-{repo}-{head}[-j-{json}]"</code></td>
+                <td>Inside the bundled bash <code>gh</code> wrapper. Comment is explicit: <em>"Use sha256 hash suffix to avoid collisions from tr-based sanitization (e.g. <code>feat/foo</code>, <code>feat-foo</code>, <code>feat_foo</code> would otherwise map to the same key)"</em>.</td>
+              </tr>
+              <tr>
+                <td>
+                  <b>scm-github webhook signature</b><br>
+                  <span class="loc">plugins/scm-github/src/index.ts:252-254</span>
+                </td>
+                <td>HMAC-SHA256 · full 64 hex chars</td>
+                <td>Webhook body, keyed by shared secret</td>
+                <td>Not an identifier — security primitive. Verifies <code>x-hub-signature-256</code>. Format mandated by GitHub.</td>
+              </tr>
+              <tr>
+                <td>
+                  <b>scm-gitlab webhook signature</b><br>
+                  <span class="loc">plugins/scm-gitlab/src/index.ts:7-124</span>
+                </td>
+                <td>SHA-256 + <code>timingSafeEqual</code></td>
+                <td>Webhook token</td>
+                <td>Same role: signature verification, not identity.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section aria-labelledby="nonhash">
+        <div class="section-head">
+          <h2 id="nonhash">3. The Non-Hash Map — Identifiers That Stay Readable</h2>
+          <p class="note">
+            These places construct identifiers that humans will read. Each has a different
+            disambiguation strategy. None of them use entropy.
+          </p>
+        </div>
+
+        <div class="grid">
+          <article class="panel">
+            <span class="tag blue">Session ID</span>
+            <h3><code>{sessionPrefix}-{N}</code> · monotonic counter</h3>
+            <p>e.g. <code>ao-79</code>, <code>int-3</code>. Allocated atomically in
+              <code>reserveNextSessionIdentity</code>.</p>
+            <ul>
+              <li><b>Disambiguation:</b> <code>reserveSessionId(sessionsDir, id)</code> is an atomic create of <code>sessions/{id}.json</code>. <code>O_EXCL</code> semantics — first writer wins.</li>
+              <li><b>Remote awareness:</b> <code>listRemoteSessionNumbers</code> at <code>session-manager.ts:771-790</code> sweeps <code>git ls-remote --heads origin "session/{prefix}-*"</code> so a re-cloned project doesn't reuse session numbers that already shipped as branches.</li>
+              <li><b>Why no hash:</b> users type these into tmux, see them on PR titles, grep for them in logs.</li>
+            </ul>
+            <p class="loc">core/src/session-manager.ts:803-832</p>
+          </article>
+
+          <article class="panel">
+            <span class="tag blue">Session prefix</span>
+            <h3>Heuristic from project ID, not hashed</h3>
+            <ul>
+              <li>≤4 chars: the projectId itself, lowercased</li>
+              <li>CamelCase: uppercase letters joined (<code>PyTorch → pt</code>)</li>
+              <li>kebab/snake: initials of each segment (<code>agent-orchestrator → ao</code>)</li>
+              <li>single word: first 3 chars (<code>integrator → int</code>)</li>
+            </ul>
+            <p class="note">Optimized for <em>readability per project</em>, not global uniqueness. Two projects with the same prefix coexist because session IDs are scoped per-project storage directory.</p>
+            <p class="loc">core/src/paths.ts:64-82</p>
+          </article>
+
+          <article class="panel">
+            <span class="tag blue">tmux session name</span>
+            <h3>Identical to the AO session ID</h3>
+            <ul>
+              <li><code>generateSessionName(prefix, num) = `${prefix}-${num}`</code> — same as the session ID.</li>
+              <li>Legacy <code>generateTmuxName</code> prepended <code>{storageKey}-</code> for cross-project disambiguation but is now <code>@deprecated</code> — session prefixes are treated as globally unique.</li>
+              <li>Used directly as <code>tmux new-session -s {sessionName}</code>.</li>
+            </ul>
+            <p class="loc">core/src/paths.ts:210-212 · plugins/runtime-tmux/src/index.ts:58-67</p>
+          </article>
+
+          <article class="panel">
+            <span class="tag blue">Worktree directory</span>
+            <h3><code>{projectWorktreesDir}/{sessionId}</code></h3>
+            <ul>
+              <li>Just the session ID under the project's worktree root. No hash.</li>
+              <li>Disambiguation comes for free: session IDs are already unique within the project.</li>
+              <li><code>clearStaleWorktreePath</code> at <code>workspace-worktree/src/index.ts:84-99</code> only deletes paths git no longer registers — preserves user state.</li>
+            </ul>
+            <p class="loc">plugins/workspace-worktree/src/index.ts:162</p>
+          </article>
+
+          <article class="panel">
+            <span class="tag blue">Branch name</span>
+            <h3>Three-layer fallback, all human-readable</h3>
+            <ul>
+              <li>1. Explicit <code>spawnConfig.branch</code> wins.</li>
+              <li>2. From issue: tracker plugin's <code>branchName(issueId, project)</code> (e.g. <code>tracker-github</code> sanitizes the issue title) — only if <code>isGitBranchNameSafe</code>.</li>
+              <li>3. From free-text issueId: lowercased <code>[a-z0-9-]</code> slug, max 60 chars, prefixed <code>feat/</code>.</li>
+              <li>4. Final fallback: <code>session/{sessionId}</code>.</li>
+            </ul>
+            <p class="note">No hash. Branch names land on GitHub and must remain greppable. Collision is impossible because <code>{sessionId}</code> already is.</p>
+            <p class="loc">core/src/session-manager.ts:1180-1201</p>
+          </article>
+
+          <article class="panel">
+            <span class="tag blue">Orchestrator session</span>
+            <h3><code>{sessionPrefix}-orchestrator</code> + numeric suffix on collision</h3>
+            <ul>
+              <li>Singleton per project. Branch is <code>orchestrator/{sessionId}</code>.</li>
+              <li>Detection regex: <code>^{prefix}-orchestrator-\d+$</code> for re-spawned orchestrators.</li>
+            </ul>
+            <p class="loc">core/src/session-manager.ts:413-431, 1513</p>
+          </article>
+        </div>
+      </section>
+
+      <section aria-labelledby="storage">
+        <div class="section-head">
+          <h2 id="storage">4. Storage Layout — Where the Hash Materializes</h2>
+          <p class="note">
+            The repo is mid-migration: legacy <code>{hash}-{projectId}/</code> directories
+            are being replaced by <code>projects/{projectId}/</code>. The hash moves out of
+            the path and into the project ID itself.
+          </p>
+        </div>
+
+        <div class="storage-map">
+          <article class="panel">
+            <span class="tag red">Legacy (storageKey-prefixed)</span>
+            <h3>Hash is the directory prefix</h3>
+            <pre class="tree">~/.agent-orchestrator/
+├── 7dc54da05c9e-agent-orchestrator/
+│   ├── sessions/
+│   │   ├── ao-79              (key=value metadata)
+│   │   └── ao-orchestrator
+│   └── worktrees/
+│       └── ao-79/
+└── config.yaml
+    projects.*.storageKey: 7dc54da05c9e</pre>
+            <p class="note" style="margin-top: 12px;">
+              <code>storageKey = SHA-256(configDir).slice(0,12)</code>. The basename suffix
+              was readability sugar; the hash carried the uniqueness.
+            </p>
+          </article>
+
+          <article class="panel">
+            <span class="tag green">V2 (hashed projectId)</span>
+            <h3>Hash is the ID suffix</h3>
+            <pre class="tree">~/.agent-orchestrator/
+├── projects/
+│   └── agent-orchestrator_a1b2c3d4e5/
+│       ├── sessions/
+│       │   ├── ao-79.json
+│       │   └── ao-orchestrator.json
+│       └── worktrees/
+│           └── ao-79/
+└── config.yaml
+    projects.*.projectId: agent-orchestrator_a1b2c3d4e5</pre>
+            <p class="note" style="margin-top: 12px;">
+              <code>projectId = sanitized_basename + "_" + SHA-256(path+origin).slice(0,10)</code>.
+              The hash now lives inside the identity, so the storage path is the identity
+              verbatim — one less indirection.
+            </p>
+          </article>
+        </div>
+
+        <article class="matrix" style="margin-top: 18px;">
+          <h3>Same job, different surface</h3>
+          <div class="ledger" role="table" aria-label="Layout comparison">
+            <div>Concern</div>
+            <div>Legacy</div>
+            <div>V2</div>
+
+            <div>Where the hash lives</div>
+            <div>In the directory prefix; project ID is bare basename.</div>
+            <div>Inside the project ID itself; directory name is the project ID verbatim.</div>
+
+            <div>Hash input</div>
+            <div><code>dirname(realpath(configPath))</code> — local path only.</div>
+            <div><code>resolve(path) + ":" + (originUrl ?? "")</code> — path + origin.</div>
+
+            <div>Stable across re-clone?</div>
+            <div>No — different clone path → different hash.</div>
+            <div>Yes when origin is supplied — origin URL anchors identity.</div>
+
+            <div>Same-name repos?</div>
+            <div>Disambiguated only by the hash prefix.</div>
+            <div>Disambiguated by hash suffix; the readable basename is preserved.</div>
+          </div>
+        </article>
+      </section>
+
+      <section aria-labelledby="patterns">
+        <div class="section-head">
+          <h2 id="patterns">5. Patterns and Inconsistencies</h2>
+          <p class="note">
+            Three patterns recur. One inconsistency stands out.
+          </p>
+        </div>
+
+        <div class="flow">
+          <div class="step">
+            <span class="num">1</span>
+            <b>Truncation length tracks blast radius</b>
+            <span>10 chars (project ID, intra-user keyspace), 12 chars (storage key, lifecycle dedupe), 16 chars (feedback dedupe + gh cache). Wider scope ⇒ wider hash.</span>
+          </div>
+          <div class="step">
+            <span class="num">2</span>
+            <b>Inputs are normalized before hashing</b>
+            <span>Origin URLs go through <code>normalizeOriginUrl</code> (storage-key.ts:10-31). Evidence strings strip volatile fields. Feedback inputs are lowercased, evidence sorted. Every hash site is deterministic across noise.</span>
+          </div>
+          <div class="step">
+            <span class="num">3</span>
+            <b>SHA-256 is the default; MD5 only for compat</b>
+            <span>The single MD5 site (kimicode) exists because kimi itself uses MD5. Comments warn loudly. Nothing AO owns is keyed by MD5.</span>
+          </div>
+          <div class="step">
+            <span class="num">4</span>
+            <b>Inconsistency: two SHA-256 hashes for "the project"</b>
+            <span><code>generateConfigHash</code> (paths.ts:32) hashes the local config directory; <code>generateExternalId</code> (global-config.ts:47) hashes path + origin. Both are 10–12 chars of SHA-256 and both identify "this project," but they aren't interchangeable. The legacy one survives behind <code>@deprecated</code> markers until <code>ao migrate-storage</code> finishes the cutover.</span>
+          </div>
+        </div>
+      </section>
+
+      </div><!-- /tab-survey -->
+
+      <div class="tab-panel" id="tab-rca" data-tab="rca" role="tabpanel" hidden>
+
+      <section aria-labelledby="rca">
+        <div class="section-head">
+          <h2 id="rca">6. RCA — Why a Single User Has Both <code>ao</code> and <code>ao2</code></h2>
+          <p class="note">
+            A real-world artifact pulled from a live <code>~/.agent-orchestrator/config.yaml</code>:
+            two checkouts of the same repo registered weeks apart, prefixes <code>ao</code> and
+            <code>ao2</code>. The current canonical collision logic produces <code>ao-1</code>,
+            not <code>ao2</code>. The prefix exists because of three competing collision-suffix
+            schemes that disagree with each other.
+          </p>
+        </div>
+
+        <article class="panel">
+          <span class="tag red">Symptom</span>
+          <h3>Two prefixes that shouldn't both be possible</h3>
+          <pre class="tree">  agent-orchestrator:
+    projectId: agent-orchestrator
+    path: /Users/.../side-quests/agent-orchestrator
+    registeredAt: 1776846929   # 2026-04-22 14:05
+    storageKey: 7dc54da05c9e   # ← V1 era
+    sessionPrefix: ao
+
+  agent-orchestrator_168566536d:
+    projectId: agent-orchestrator_168566536d
+    path: /Users/.../main-quests/agent-orchestrator
+    registeredAt: 1778140403   # 2026-05-07 13:23 (today)
+    displayName: agent-orchestrator-2
+    sessionPrefix: ao2          # ← shouldn't exist under current canonical code</pre>
+          <p class="note" style="margin-top: 14px;">
+            Same repo, two clones. The canonical allocator
+            (<code>deriveAvailableSessionPrefix</code> at <code>global-config.ts:619-624</code>)
+            would have produced <code>ao-1</code>. Something else fired.
+          </p>
+        </article>
+
+        <article class="panel" style="margin-top: 18px;">
+          <span class="tag gold">Smoking gun</span>
+          <h3>A second, no-dash collision counter in <code>start.ts</code></h3>
+          <p>Inside <code>addProjectToConfig</code> at <code>cli/src/commands/start.ts:688-697</code>:</p>
+          <pre class="tree">let prefix = generateSessionPrefix(projectId);
+const existingPrefixes = new Set(
+  Object.values(config.projects).map(
+    (p) => p.sessionPrefix || generateSessionPrefix(basename(p.path)),
+  ),
+);
+if (existingPrefixes.has(prefix)) {
+  let i = 2;
+  while (existingPrefixes.has(`${prefix}${i}`)) i++;
+  prefix = `${prefix}${i}`;     // ← no dash, counter starts at 2
+}</pre>
+          <p class="note" style="margin-top: 14px;">
+            Pure string concat: <code>${prefix}${i}</code>. No separator, counter starts
+            at 2, completely independent from <code>deriveAvailableSessionPrefix</code> in
+            <code>global-config.ts</code>.
+          </p>
+        </article>
+
+        <article class="panel" style="margin-top: 18px;">
+          <span class="tag blue">Walkthrough</span>
+          <h3>What actually ran when the second clone was registered</h3>
+          <div class="flow">
+            <div class="step">
+              <span class="num">1</span>
+              <b>projectId collision (dashed)</b>
+              <span><code>start.ts:642-650</code>. <code>basename(path)</code> = <code>agent-orchestrator</code>, already in config. Walks <code>${id}-${i}</code> from i=2 → <code>projectId = "agent-orchestrator-2"</code>.</span>
+            </div>
+            <div class="step">
+              <span class="num">2</span>
+              <b>Prefix derivation</b>
+              <span><code>start.ts:688</code>. <code>generateSessionPrefix("agent-orchestrator-2")</code> sees a kebab-case input, takes initials of <code>agent</code>/<code>orchestrator</code>/<code>2</code> → <strong><code>ao2</code></strong>. The collision-suffix's <code>"2"</code> leaks into the prefix as a literal character.</span>
+            </div>
+            <div class="step">
+              <span class="num">3</span>
+              <b>Prefix collision check skipped</b>
+              <span><code>start.ts:696-700</code>. <code>ao2</code> isn't in <code>existingPrefixes</code>, so the no-dash counter loop doesn't fire. Prefix stays <code>ao2</code>.</span>
+            </div>
+            <div class="step">
+              <span class="num">4</span>
+              <b>Hand-off with explicit prefix</b>
+              <span><code>start.ts:721-727</code>. Calls <code>registerProjectInGlobalConfig(..., { sessionPrefix: "ao2" })</code>. The pre-computed prefix is passed in via <code>localConfig</code>.</span>
+            </div>
+            <div class="step">
+              <span class="num">5</span>
+              <b>Canonical allocator never runs</b>
+              <span><code>global-config.ts:708-711</code>. The cascade is <code>existing?.sessionPrefix ?? localConfig?.sessionPrefix ?? generateSessionPrefix(basename(path))</code>. <code>localConfig.sessionPrefix = "ao2"</code> is non-null, so the <code>basename(path)</code> fallback (which would have produced <code>ao</code> → collision → <code>deriveAvailableSessionPrefix</code> → <code>ao-1</code>) never runs.</span>
+            </div>
+            <div class="step">
+              <span class="num">6</span>
+              <b>V2 ID swap, prefix preserved</b>
+              <span><code>global-config.ts:668-685</code>. The projectId gets replaced with <code>generateExternalId(path, origin)</code> = <code>agent-orchestrator_168566536d</code>. <code>name="agent-orchestrator-2"</code> survives as <code>displayName</code>; <code>sessionPrefix="ao2"</code> survives verbatim.</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="matrix" style="margin-top: 18px;">
+          <h3>Three (really four) collision-suffix conventions in the same repo</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Site</th>
+                <th>Format</th>
+                <th>Start</th>
+                <th>Lives in</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>addProjectToConfig</code> — projectId</td>
+                <td><code>${id}-${i}</code></td>
+                <td>2</td>
+                <td>cli/src/commands/start.ts:642-650</td>
+              </tr>
+              <tr>
+                <td><code>addProjectToConfig</code> — prefix</td>
+                <td><code>${prefix}${i}</code> <em>(no dash)</em></td>
+                <td>2</td>
+                <td>cli/src/commands/start.ts:688-697</td>
+              </tr>
+              <tr>
+                <td><code>deriveAvailableSessionPrefix</code></td>
+                <td><code>${prefix}-${suffix}</code></td>
+                <td>1</td>
+                <td>core/src/global-config.ts:610-628</td>
+              </tr>
+              <tr>
+                <td>Orchestrator re-add (<code>start.ts</code>)</td>
+                <td><code>${id}-${randomBase36(4)}</code></td>
+                <td>n/a</td>
+                <td>cli/src/commands/start.ts:1460-1470</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="note" style="margin-top: 12px;">
+            Three of these allocate human-typed identifiers. Each one disagrees with the others
+            on separator and starting index. The fourth uses entropy.
+          </p>
+        </article>
+
+        <article class="panel" style="margin-top: 18px;">
+          <span class="tag red">Deeper bug</span>
+          <h3><code>deriveAvailableSessionPrefix</code> is dead for the CLI path</h3>
+          <p>
+            Two of the three real entry points pre-compute their own prefix and pass it as
+            <code>localConfig.sessionPrefix</code> to <code>registerProjectInGlobalConfig</code>:
+          </p>
+          <ul>
+            <li><code>ao start &lt;path&gt;</code> via <code>addProjectToConfig</code> (<code>start.ts:725</code>) — uses no-dash counter.</li>
+            <li><code>registerFlatConfig</code> on first start (<code>start.ts:140-148</code>) — also pre-computes.</li>
+            <li>Web <code>POST /api/projects</code> (<code>web/src/app/api/projects/route.ts:103</code>) — does <em>not</em> pre-compute, only sends <code>defaultBranch</code>.</li>
+          </ul>
+          <p class="note" style="margin-top: 12px;">
+            The cascade in <code>registerProjectInGlobalConfig</code> means
+            <code>localConfig.sessionPrefix</code> wins over the
+            <code>basename(path)</code> fallback. <code>deriveAvailableSessionPrefix</code>
+            only runs through that fallback. So in practice, only the web modal exercises
+            it. CLI registrations bypass it entirely. <strong>You can register the same
+            repo through CLI and web and get different prefixes for it.</strong>
+          </p>
+        </article>
+
+        <article class="panel" style="margin-top: 18px;">
+          <span class="tag green">Fix shape</span>
+          <h3>Centralize allocation; delete the duplicates</h3>
+          <ul>
+            <li>Delete <code>start.ts:688-697</code> (the no-dash counter). Stop passing <code>sessionPrefix</code> from <code>addProjectToConfig</code> into <code>registerProjectInGlobalConfig</code>.</li>
+            <li>Same for <code>registerFlatConfig</code> at <code>start.ts:140-148</code> — drop the pre-computed prefix.</li>
+            <li>Let <code>deriveAvailableSessionPrefix</code> in <code>global-config.ts</code> be the only allocator. Pick a format (<code>${prefix}-${i}</code> reads cleaner) and apply it everywhere.</li>
+            <li>The orchestrator random-suffix at <code>start.ts:1460-1470</code> is a different concern (cross-orchestrator races) and can stay, but should also funnel through one helper.</li>
+            <li>Existing <code>ao2</code> entries don't need migration — they're valid prefixes, just inconsistent. New registrations would converge.</li>
+          </ul>
+        </article>
+      </section>
+
+      <section aria-labelledby="ondisk">
+        <div class="section-head">
+          <h2 id="ondisk">7. The Live Disk — One Real User as a Worked Example</h2>
+          <p class="note">
+            All numbers below come from a real <code>~/.agent-orchestrator/</code> on this
+            machine, today. They show what the current identity system actually produces
+            after a few weeks of normal use, not what the architecture diagrams say it
+            should produce.
+          </p>
+        </div>
+
+        <article class="matrix">
+          <h3>Inventory</h3>
+          <div class="ledger" role="table" aria-label="On-disk inventory">
+            <div>What</div>
+            <div>Count / Size</div>
+            <div>Notes</div>
+
+            <div>Total <code>~/.agent-orchestrator/</code></div>
+            <div>297 MB</div>
+            <div>Mostly worktree code (199 MB inside <code>projects/agent-orchestrator/worktrees/</code>).</div>
+
+            <div>V2 projects in <code>projects/</code></div>
+            <div>8</div>
+            <div>2 of these are the same repo (<code>agent-orchestrator</code> + <code>agent-orchestrator_168566536d</code>) — the V1/V2 split.</div>
+
+            <div><code>*-observability</code> dirs at root</div>
+            <div><strong>153</strong></div>
+            <div>One per unique <code>configPath</code> ever seen by an ao process. 38 are &gt;7 days old. Total NDJSON files: 294. Each PR session worktree owns its own <code>agent-orchestrator.yaml</code>, so each session creates a new dir nobody cleans up.</div>
+
+            <div><code>*.migrated</code> dirs</div>
+            <div>1 (<code>111111111114.migrated</code>)</div>
+            <div>Leftover from <code>ao migrate-storage</code> that completed but never had its rollback artefact GC'd.</div>
+
+            <div>Bare hash dirs without suffix</div>
+            <div>1 (<code>111111111114</code>)</div>
+            <div>Sibling to the <code>.migrated</code> above. Migration partially re-created what it migrated.</div>
+
+            <div>Legacy <code>~/.worktrees/</code> tree</div>
+            <div>2 dirs, 1 leaf</div>
+            <div><code>~/.worktrees/agent-orchestrator/ao-101</code> stranded outside V2 layout. <code>migrate-storage</code> never adopted it because it wasn't under <code>~/.agent-orchestrator/</code>.</div>
+
+            <div>Live tmux sessions</div>
+            <div>13</div>
+            <div>One named <code>ao-ao-orchestrator</code> (doubled prefix). One named <code>ao-131</code> (current, correct format).</div>
+
+            <div>Sessions in active project (<code>agent-orchestrator/</code>)</div>
+            <div>61 JSON + 34 worker-prompt MD + 10 archive entries</div>
+            <div>15 worktrees on disk; 13 tmux sessions alive. Drift between metadata and runtime.</div>
+          </div>
+        </article>
+
+        <article class="panel" style="margin-top: 18px;">
+          <span class="tag red">Smoking artefact #1</span>
+          <h3>Active orchestrator carries a legacy storageKey-prefixed tmux name</h3>
+          <pre class="tree">  // projects/agent-orchestrator/orchestrator.json
+  {
+    "tmuxName": "66c66786e971-agent-orchestrator-ao-orchestrator-8",
+    "runtimeHandle": {
+      "data": {
+        "workspacePath": "/Users/.../.worktrees/agent-orchestrator/ao-orchestrator-8"
+      }
+    },
+    "lifecycle": { "session": { "state": "stuck",
+                                "reason": "probe_failure",
+                                "lastTransitionAt": "2026-04-21T17:10:10.676Z" } }
+  }</pre>
+          <p class="note" style="margin-top: 12px;">
+            This file is in the V2 project directory but holds a V1 tmux name format
+            (<code>{storageKey}-{name}-{prefix}-{N}</code>) and a workspacePath in the legacy
+            <code>~/.worktrees/</code> tree. Migration ran for the directory layout but
+            didn't rewrite the metadata, so the orchestrator has been "stuck" since
+            2026-04-21 — three weeks. Probes are looking for a tmux session that no
+            longer exists under that name.
+          </p>
+        </article>
+
+        <article class="panel" style="margin-top: 18px;">
+          <span class="tag red">Smoking artefact #2</span>
+          <h3>Live tmux session named <code>ao-ao-orchestrator</code></h3>
+          <pre class="tree">  // tmux ls
+  ao-ao-orchestrator: 1 windows (created Thu May  7 15:06:17 2026)
+  ao-131:            1 windows (created Thu May  7 15:06:40 2026) (attached)
+
+  // projects/agent-orchestrator/sessions/ao-orchestrator.json
+  {
+    "tmuxName": "ao-ao-orchestrator",
+    "branch": "orchestrator/ao-orchestrator",
+    "runtimeHandle": { "id": "ao-ao-orchestrator", "runtimeName": "tmux" }
+  }</pre>
+          <p class="note" style="margin-top: 12px;">
+            Doubled <code>ao-</code> prefix. The session name is <code>ao-orchestrator</code>;
+            the tmux name should be the same; instead it's <code>ao-ao-orchestrator</code>.
+            Third tmux-naming convention in active use.
+          </p>
+        </article>
+
+        <article class="panel" style="margin-top: 18px;">
+          <span class="tag red">Smoking artefact #3</span>
+          <h3>The 153 observability dirs are a hash leak</h3>
+          <p>
+            <code>getObservabilityBaseDir(configPath)</code> at <code>paths.ts:160-163</code>
+            returns <code>~/.agent-orchestrator/{generateConfigHash(configPath)}-observability</code>.
+            The hash input is <code>dirname(realpath(configPath))</code>. Every PR session worktree
+            ends up with its own <code>agent-orchestrator.yaml</code> at a unique path, so each
+            session that writes observability data produces a brand-new directory that nobody
+            ever GCs.
+          </p>
+          <p class="note" style="margin-top: 8px;">
+            The user has 8 projects but 153 observability directories. That ratio is not
+            going to improve — every new PR session adds another one. The data inside is
+            essentially process-level traces (<code>session-manager-{pid}.{json,ndjson}</code>),
+            scoped by PID, not by anything semantic.
+          </p>
+        </article>
+      </section>
+
+      </div><!-- /tab-rca -->
+
+      <div class="tab-panel" id="tab-fix" data-tab="fix" role="tabpanel" hidden>
+
+      <section aria-labelledby="dead-code">
+        <div class="section-head">
+          <h2 id="dead-code">8. Dead Code — What's Exported But Has Zero Live Callers</h2>
+          <p class="note">
+            Counted by grepping every public export from <code>core/src/paths.ts</code>
+            and <code>core/src/storage-key.ts</code> against the rest of the codebase
+            (excluding tests, integration tests, the migration module itself, and
+            paths.ts/storage-key.ts/global-config.ts/index.ts internal references). A
+            zero here means the function is exported from <code>@aoagents/ao-core</code>
+            and nothing outside its own module calls it.
+          </p>
+        </div>
+
+        <article class="matrix">
+          <h3>Public API entries with zero live callers</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Export</th>
+                <th>Live callers</th>
+                <th>Why it lingers</th>
+                <th>Safe to delete?</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>deriveStorageKey</code></td>
+                <td>0 (tests only)</td>
+                <td>Was the V2-canonical hash. Replaced by <code>generateExternalId</code>.</td>
+                <td>Yes</td>
+              </tr>
+              <tr>
+                <td><code>generateTmuxName</code></td>
+                <td>0</td>
+                <td>Legacy hash-prefixed format <code>{storageKey}-{prefix}-{N}</code>.</td>
+                <td>Yes — but its data lives on (orchestrator.json above).</td>
+              </tr>
+              <tr>
+                <td><code>parseTmuxName</code></td>
+                <td>0</td>
+                <td>Inverse of the above.</td>
+                <td>Yes — once metadata is rewritten.</td>
+              </tr>
+              <tr>
+                <td><code>getProjectBaseDir</code></td>
+                <td>0</td>
+                <td>V1 storage path. Used to be everywhere; now a path artefact.</td>
+                <td>Yes</td>
+              </tr>
+              <tr>
+                <td><code>getSessionsDir</code></td>
+                <td>0</td>
+                <td>V1 sessions dir.</td>
+                <td>Yes</td>
+              </tr>
+              <tr>
+                <td><code>getWorktreesDir</code></td>
+                <td>0</td>
+                <td>V1 worktrees dir.</td>
+                <td>Yes</td>
+              </tr>
+              <tr>
+                <td><code>getFeedbackReportsDir</code></td>
+                <td>0</td>
+                <td>V1 feedback dir.</td>
+                <td>Yes</td>
+              </tr>
+              <tr>
+                <td><code>getArchiveDir</code></td>
+                <td>0</td>
+                <td>Archive system removed in V2.</td>
+                <td>Yes</td>
+              </tr>
+              <tr>
+                <td><code>getOriginFilePath</code> / <code>validateAndStoreOrigin</code></td>
+                <td>0</td>
+                <td><code>.origin</code> file collision detection. Replaced by registry-level deduping.</td>
+                <td>Yes</td>
+              </tr>
+              <tr>
+                <td><code>requireStorageKey</code></td>
+                <td>0 (only by deprecated helpers above)</td>
+                <td>Throws if storageKey absent — only meaningful in V1 path code.</td>
+                <td>Yes — falls out when the deprecated helpers go.</td>
+              </tr>
+              <tr>
+                <td><code>generateConfigHash</code></td>
+                <td>1 (<code>getObservabilityBaseDir</code>)</td>
+                <td>Last surviving caller of the legacy 12-char SHA-256 of <code>configPath</code>.</td>
+                <td>After observability is moved into the project dir, yes.</td>
+              </tr>
+              <tr>
+                <td><code>storageKey</code> field in <code>GlobalProjectEntrySchema</code></td>
+                <td>Still in 2 of 8 user entries</td>
+                <td>Kept optional in Zod for back-compat. PR #1466 removed the writers but not the schema.</td>
+                <td>After one release-cycle of stripping in <code>ao migrate</code>.</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="note" style="margin-top: 12px;">
+            Net: ~12 exports, ~200 lines of paths.ts and storage-key.ts, plus the
+            <code>storageKey</code> Zod field. None of it is load-bearing for the running
+            system; all of it is hazardous because it mints types and signatures that
+            still type-check.
+          </p>
+        </article>
+      </section>
+
+      <section aria-labelledby="problem">
+        <div class="section-head">
+          <h2 id="problem">9. The Full Problem List</h2>
+          <p class="note">
+            Consolidating everything from the on-disk forensics, the RCA, the dead-code
+            census, and the prior section's hash map. Numbered so the migration plan
+            can reference items.
+          </p>
+        </div>
+
+        <div class="grid three">
+          <article class="panel">
+            <span class="tag red">Identity sprawl</span>
+            <h3>P1 — Three project-identity formats</h3>
+            <ul>
+              <li>Bare basename (V1, e.g. <code>agent-orchestrator</code>).</li>
+              <li>V2 hashed <code>{basename}_{sha10}</code>.</li>
+              <li><code>deriveStorageKey</code> origin-anchored 12-char (dead but exported).</li>
+            </ul>
+            <p class="note" style="margin-top: 8px;">Same user has 1 of each kind for the same repo.</p>
+          </article>
+
+          <article class="panel">
+            <span class="tag red">Allocation chaos</span>
+            <h3>P2 — Four prefix-collision schemes</h3>
+            <ul>
+              <li><code>${prefix}-${i}</code> from 1 (<code>global-config.ts:620</code>).</li>
+              <li><code>${prefix}${i}</code> from 2 (<code>start.ts:697</code>) — produced <code>ao2</code>.</li>
+              <li><code>${id}-${i}</code> from 2 (<code>start.ts:644</code>).</li>
+              <li>Random base36 (<code>start.ts:1465</code>).</li>
+            </ul>
+            <p class="note" style="margin-top: 8px;">CLI vs web give different prefixes for same input.</p>
+          </article>
+
+          <article class="panel">
+            <span class="tag red">Tmux name drift</span>
+            <h3>P3 — Three tmux conventions live in real metadata</h3>
+            <ul>
+              <li><code>{prefix}-{N}</code> — current.</li>
+              <li><code>{prefix}-{prefix}-{N}</code> — doubled, in <code>ao-ao-orchestrator</code>.</li>
+              <li><code>{storageKey}-{name}-{prefix}-{N}</code> — legacy, still in <code>orchestrator.json</code>.</li>
+            </ul>
+            <p class="note" style="margin-top: 8px;">Metadata drift = stuck orchestrators.</p>
+          </article>
+
+          <article class="panel">
+            <span class="tag red">Hash leak</span>
+            <h3>P4 — 153 observability dirs and counting</h3>
+            <p>One per unique <code>configPath</code> hash. Every PR session creates a new one. No GC.</p>
+          </article>
+
+          <article class="panel">
+            <span class="tag red">Stranded data</span>
+            <h3>P5 — Legacy worktree tree, .migrated stragglers</h3>
+            <p><code>~/.worktrees/agent-orchestrator/ao-101</code> never adopted. <code>111111111114.migrated</code> sibling never collected.</p>
+          </article>
+
+          <article class="panel">
+            <span class="tag red">Cross-cutting bug</span>
+            <h3>P6 — <code>localConfig.sessionPrefix</code> short-circuits canonical allocator</h3>
+            <p>CLI paths pre-compute prefix and pass it via <code>localConfig</code>; the cascade in <code>registerProjectInGlobalConfig</code> respects it before the canonical allocator can run.</p>
+          </article>
+
+          <article class="panel">
+            <span class="tag red">Schema drift</span>
+            <h3>P7 — <code>storageKey</code> still in Zod schema</h3>
+            <p>Optional field, written by no one, present in 2 of 8 user entries. Reads as live state to anything that walks the schema.</p>
+          </article>
+
+          <article class="panel">
+            <span class="tag red">Dead exports</span>
+            <h3>P8 — 12 zero-caller helpers in <code>@aoagents/ao-core</code></h3>
+            <p>Listed in §8. They type-check, they ship, they confuse readers.</p>
+          </article>
+
+          <article class="panel">
+            <span class="tag red">Race-prone allocation</span>
+            <h3>P9 — Session counter scans every time</h3>
+            <p><code>reserveNextSessionIdentity</code> scans <code>sessions/</code> + <code>git ls-remote</code> on every spawn. O(n) per spawn, no monotonic guarantee if a branch was deleted upstream.</p>
+          </article>
+
+          <article class="panel">
+            <span class="tag red">Collision throw</span>
+            <h3>P10 — <code>generateExternalId</code> 10-char hash with no recovery</h3>
+            <p>Throws "extremely unlikely please file a bug" on collision. 40 bits = ~1M before birthday risk; fine per-user, fragile in shared/multi-tenant.</p>
+          </article>
+
+          <article class="panel">
+            <span class="tag red">Case sensitivity</span>
+            <h3>P11 — Inconsistent case normalization</h3>
+            <p>Origin URLs lowercased; basenames lowercased in <code>sanitizeBasename</code>; raw paths <em>not</em> lowercased before hashing in <code>generateConfigHash</code>. APFS users can produce two different hashes that map to one directory.</p>
+          </article>
+
+          <article class="panel">
+            <span class="tag red">Cross-machine</span>
+            <h3>P12 — File lock is local-only</h3>
+            <p>Synced <code>~/.agent-orchestrator/</code> (Dropbox/iCloud) breaks: two machines registering concurrently both think they got the lock.</p>
+          </article>
+        </div>
+      </section>
+
+      <section aria-labelledby="newsystem">
+        <div class="section-head">
+          <h2 id="newsystem">10. The New System</h2>
+          <p class="note">
+            One identity rule per layer. Stored, not derived. Counters where humans look,
+            opaque IDs where the filesystem looks. No content-addressed paths anywhere
+            users see.
+          </p>
+        </div>
+
+        <div class="storage-map">
+          <article class="panel tree-card">
+            <span class="tag red">Today (V2 mid-migration)</span>
+            <h3>Mixed identity, four allocators, leaks</h3>
+            <pre class="tree">~/.agent-orchestrator/
+├── projects/
+│   ├── agent-orchestrator/                  # V1 bare, has storageKey
+│   │   ├── sessions/ao-131.json             # workspacePath OK
+│   │   ├── orchestrator.json                # legacy tmuxName!
+│   │   └── worktrees/ao-131/
+│   ├── agent-orchestrator_168566536d/       # V2 hashed
+│   │   └── sessions/ao2-orchestrator.json   # prefix "ao2" from no-dash bug
+│   ├── donna_00956d65b9/
+│   ├── tools_8779752666/
+│   └── 111111111114/                        # mystery 1s
+├── 0149ff87f4a5-observability/              # 153 of these
+├── 03706227e15e-observability/
+├── …(151 more)
+├── 111111111114.migrated/                   # rollback leftover
+├── config.yaml                              # storageKey field still in 2 entries
+├── running.json
+└── last-stop.json
+
+~/.worktrees/agent-orchestrator/ao-101       # orphan, never adopted</pre>
+          </article>
+
+          <article class="panel tree-card">
+            <span class="tag green">Proposed (V3)</span>
+            <h3>One ID format, one allocator, one observability tree</h3>
+            <pre class="tree">~/.agent-orchestrator/
+├── projects/
+│   ├── agent-orchestrator_a1b2c3d4e5/               # V2 format, kept
+│   │   ├── identity.json                            # displayName, originUrl, prefix, repo
+│   │   ├── .next-session-id.json                    # monotonic counter
+│   │   ├── sessions/{prefix}-{N}.json
+│   │   ├── worktrees/{prefix}-{N}/
+│   │   ├── observability/processes/                 # moved here, no hash
+│   │   └── prompts/worker-prompt-{prefix}-{N}.md
+│   └── donna_00956d65b9/
+├── observability/
+│   └── orphan/                                      # for unattributable obs files
+├── migrations/
+│   └── v3-2026-05-07T16-00-00.json                  # full migration record
+├── config.yaml                                      # storageKey field gone
+├── running.json
+└── last-stop.json
+
+(no ~/.worktrees/ — adopted into projects/{id}/worktrees/)</pre>
+          </article>
+        </div>
+
+        <article class="matrix" style="margin-top: 18px;">
+          <h3>Layer-by-layer rules</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Layer</th>
+                <th>Identifier</th>
+                <th>Format / source</th>
+                <th>Where it lives</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>0 — Project identity</td>
+                <td><code>projectId</code></td>
+                <td><code>{sanitized_basename}_{hash10}</code> where <code>hash10 = SHA-256(resolve(path) + ":" + originUrl).slice(0,10)</code>. <strong>Same as V2.</strong> Deterministic, readable, lookup-friendly. V1 bare-basename entries get normalized to this format during migration.</td>
+                <td><code>config.yaml</code> as map key; <code>projects/{projectId}/identity.json</code>.</td>
+              </tr>
+              <tr>
+                <td>0b — Project metadata</td>
+                <td><code>displayName</code>, <code>originUrl</code>, <code>path</code>, <code>realpath</code>, <code>repo</code></td>
+                <td>Stored verbatim. Re-registering at the same path produces the same hash → same projectId. The V2 path-equality check at <code>global-config.ts:674</code> stays as-is.</td>
+                <td><code>config.yaml</code>.</td>
+              </tr>
+              <tr>
+                <td>1 — Session prefix</td>
+                <td><code>sessionPrefix</code></td>
+                <td>Allocated once at registration. Default = <code>generateSessionPrefix(displayName)</code>; collision against other registered prefixes resolved by <strong>one canonical allocator</strong>: <code>${prefix}-${i}</code> starting at i=1. Stored in identity.json.</td>
+                <td><code>identity.json</code>.</td>
+              </tr>
+              <tr>
+                <td>2 — Session ID</td>
+                <td><code>sessionId</code></td>
+                <td><code>{sessionPrefix}-{N}</code> where N is monotonic <strong>per project</strong>. Backed by <code>.next-session-id.json</code>; reconciled at <code>ao start</code> against <code>sessions/</code> + <code>git ls-remote</code>.</td>
+                <td><code>.next-session-id.json</code>.</td>
+              </tr>
+              <tr>
+                <td>3 — Tmux name</td>
+                <td><code>tmuxName</code></td>
+                <td>Always <code>= sessionId</code>. No prefix, no hash, no doubling. One rule, no exceptions.</td>
+                <td>Runtime only.</td>
+              </tr>
+              <tr>
+                <td>3b — Branch name</td>
+                <td><code>branch</code></td>
+                <td><code>session/{sessionId}</code> (worker), <code>orchestrator/{sessionId}</code> (orchestrator), or tracker-supplied if branch-safe.</td>
+                <td>git.</td>
+              </tr>
+              <tr>
+                <td>3c — Worktree path</td>
+                <td><code>workspacePath</code></td>
+                <td><code>projects/{projectId}/worktrees/{sessionId}</code>. No <code>~/.worktrees/</code>.</td>
+                <td>filesystem.</td>
+              </tr>
+              <tr>
+                <td>4 — Observability</td>
+                <td>obs path</td>
+                <td><code>projects/{projectId}/observability/processes/{component}-{pid}.{json,ndjson}</code>. Cross-cutting / unattributed → <code>~/.agent-orchestrator/observability/orphan/</code>.</td>
+                <td>filesystem.</td>
+              </tr>
+              <tr>
+                <td>5 — Hashes that stay</td>
+                <td>HMAC, feedback dedupe, kimicode md5</td>
+                <td>Webhook signing (security), feedback dedupe key (content addressing), kimicode mirror of external scheme.</td>
+                <td>Unchanged.</td>
+              </tr>
+            </tbody>
+          </table>
+        </article>
+
+        <article class="panel" style="margin-top: 18px;">
+          <span class="tag green">Why keep V2 <code>{basename}_{hash10}</code></span>
+          <h3>The V2 format is right; we just need to apply it uniformly</h3>
+          <ul>
+            <li><b>Already in use for 6 of 8 projects.</b> The migration footprint is small: only the 2 V1 bare-basename entries (<code>agent-orchestrator</code>, <code>harshitsinghbhandari-github-io</code>) need re-keying.</li>
+            <li><b>Readable on disk.</b> <code>ls projects/</code> still tells you what's there at a glance. Debug output, error messages, and grep all stay productive.</li>
+            <li><b>Deterministic from <code>(path, origin)</code>.</b> Re-registering at the same path finds the same projectId via the existing path-equality check at <code>global-config.ts:674</code>. No new lookup machinery needed.</li>
+            <li><b>40 bits of hash is fine for a single-user CLI.</b> Birthday collision risk starts around ~1M projects. The "please file a bug" recovery path can stay — it just won't fire.</li>
+            <li><b>Already filesystem-safe.</b> <code>sanitizeBasename</code> at <code>global-config.ts:55-62</code> already lowercases, strips non-<code>[a-z0-9_-]</code>, caps at 30 chars.</li>
+          </ul>
+          <p class="note" style="margin-top: 12px;">
+            <strong>What's not changing:</strong> the projectId format itself. The wins
+            in this section come from the <em>other</em> rules — single prefix allocator,
+            <code>tmuxName ≡ sessionId</code>, observability inside the project dir,
+            stored counter — all of which are independent of project ID shape and apply
+            cleanly on top of V2.
+          </p>
+        </article>
+
+        <article class="panel" style="margin-top: 18px;">
+          <span class="tag green">Why a stored counter for sessionId</span>
+          <h3>Cheap, correct, monotonic</h3>
+          <ul>
+            <li><b>O(1) allocation</b> instead of the current O(n) directory + remote scan.</li>
+            <li><b>Monotonic across upstream branch deletion.</b> Delete <code>session/ao-131</code> upstream and the next session is still <code>ao-132</code>, not a recycled <code>ao-131</code>.</li>
+            <li><b>Reconciler protects against drift.</b> On <code>ao start</code>, scan <code>sessions/*.json</code> and <code>git ls-remote</code>; if max(observed) ≥ counter, advance. The remote scan is now a backstop, not the primary source.</li>
+            <li><b>One file, one lock.</b> Atomic increment under the project's own write lock; cross-project allocations don't contend.</li>
+          </ul>
+        </article>
+      </section>
+
+      <section aria-labelledby="comparison">
+        <div class="section-head">
+          <h2 id="comparison">11. Side-by-side Comparison</h2>
+          <p class="note">
+            Same user, same repo, same workflow — what each layer looks like before and
+            after. Numbers in the "Today" column are real counts from the on-disk
+            inventory in §7.
+          </p>
+        </div>
+
+        <article class="matrix">
+          <h3>What changes per layer</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Concern</th>
+                <th>Today</th>
+                <th>V3</th>
+                <th>Wins</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Project identity</td>
+                <td>Three formats live (V1 bare, V2 hashed, dead origin-hash)</td>
+                <td>One: V2 <code>{basename}_{hash10}</code> applied to all entries</td>
+                <td>P1</td>
+              </tr>
+              <tr>
+                <td>Project storage path</td>
+                <td><code>projects/{mixed-format}/</code></td>
+                <td><code>projects/{basename}_{hash10}/</code> uniformly</td>
+                <td>P1</td>
+              </tr>
+              <tr>
+                <td>Hash collision recovery</td>
+                <td>Throws "extremely unlikely — please file a bug"</td>
+                <td>Same. 40 bits is enough for a single-user tool; revisit if AO grows hosted.</td>
+                <td>P10 (deferred)</td>
+              </tr>
+              <tr>
+                <td>Path case sensitivity</td>
+                <td><code>generateExternalId</code> doesn't lowercase the path before hashing</td>
+                <td>Lowercase the path on case-insensitive filesystems (APFS/HFS+/NTFS) before hashing</td>
+                <td>P11</td>
+              </tr>
+              <tr>
+                <td>Same-repo dual registration</td>
+                <td>2 dirs side-by-side (<code>ao</code> + <code>ao2</code>)</td>
+                <td>Lookup by <code>(originUrl, realpath)</code> finds existing</td>
+                <td>P1</td>
+              </tr>
+              <tr>
+                <td>Prefix allocation</td>
+                <td>4 schemes; CLI vs web disagree</td>
+                <td>1 canonical allocator at one callsite</td>
+                <td>P2, P6</td>
+              </tr>
+              <tr>
+                <td>Tmux naming</td>
+                <td>3 conventions live in real metadata</td>
+                <td><code>tmuxName ≡ sessionId</code></td>
+                <td>P3</td>
+              </tr>
+              <tr>
+                <td>Observability path</td>
+                <td>153 root-level dirs, growing</td>
+                <td><code>projects/{id}/observability/</code> + a single <code>observability/orphan/</code></td>
+                <td>P4</td>
+              </tr>
+              <tr>
+                <td>Worktree location</td>
+                <td>Mostly <code>projects/{id}/worktrees/</code>, some <code>~/.worktrees/</code></td>
+                <td>Always <code>projects/{id}/worktrees/</code></td>
+                <td>P5</td>
+              </tr>
+              <tr>
+                <td>Session ID allocation</td>
+                <td>Scan disk + <code>git ls-remote</code> per spawn</td>
+                <td>Counter file + reconcile-at-start</td>
+                <td>P9</td>
+              </tr>
+              <tr>
+                <td>storageKey schema field</td>
+                <td>Optional, written by no one, present in 2 entries</td>
+                <td>Removed</td>
+                <td>P7</td>
+              </tr>
+              <tr>
+                <td>Dead exports</td>
+                <td>~12 from <code>@aoagents/ao-core</code></td>
+                <td>Deleted in a follow-up PR (manifest from migrator)</td>
+                <td>P8</td>
+              </tr>
+              <tr>
+                <td>Cross-machine sync safety</td>
+                <td>Local file lock only</td>
+                <td>Same — but registry now has <code>(originUrl, realpath)</code> as the natural dedup key, so concurrent registrations on synced storage merge instead of fork</td>
+                <td>P12 (mitigated)</td>
+              </tr>
+            </tbody>
+          </table>
+        </article>
+
+        <article class="panel" style="margin-top: 18px;">
+          <span class="tag blue">What's NOT changing</span>
+          <h3>Hashes that stay because they're correct</h3>
+          <ul>
+            <li>HMAC-SHA256 webhook signing in <code>scm-github</code> + <code>scm-gitlab</code> with <code>timingSafeEqual</code>.</li>
+            <li>Feedback dedupe key (16-char SHA-256 of canonical JSON, sorted evidence).</li>
+            <li>Lifecycle evidence dedupe (12-char SHA-256, normalized).</li>
+            <li>kimicode md5(cwd) bucket — it mirrors kimi's external scheme; not ours to change.</li>
+          </ul>
+          <p class="note" style="margin-top: 8px;">
+            The hashing primitives were never the problem. The problem was using hashes
+            as user-facing identifiers — and using them inconsistently.
+          </p>
+        </article>
+      </section>
+
+      <section aria-labelledby="aomigrate">
+        <div class="section-head">
+          <h2 id="aomigrate">12. <code>ao migrate</code> — One-Pass Cleanup</h2>
+          <p class="note">
+            Replaces <code>ao migrate-storage</code> (V1→V2) with a single command that
+            takes the user from any prior layout — V1 hash-prefixed, V2 mixed, or
+            already-V3-but-with-leaks — to the V3 target above. Idempotent: running it
+            twice is a no-op the second time.
+          </p>
+        </div>
+
+        <article class="panel">
+          <span class="tag gold">Phase 1</span>
+          <h3>Inventory — what's on disk, what's running, what's stranded</h3>
+          <ul>
+            <li>Walk <code>~/.agent-orchestrator/</code>: catalog <code>projects/*</code>, <code>*-observability</code>, <code>*-{name}</code>, <code>*.migrated</code>, bare hash dirs, plus state files (<code>running.json</code>, <code>last-stop.json</code>, <code>config.yaml</code>).</li>
+            <li>Walk <code>~/.worktrees/</code>: catalog every leaf as a candidate adoption.</li>
+            <li>Read every <code>projects/*/sessions/*.json</code>: extract <code>workspacePath</code>, <code>tmuxName</code>, <code>branch</code>, <code>runtimeHandle.*</code>, <code>lifecycle.runtime.handle.*</code>.</li>
+            <li>Read every <code>projects/*/orchestrator.json</code>: same fields.</li>
+            <li><code>tmux ls</code>: live tmux session names.</li>
+            <li><code>config.yaml</code>: registry entries with <code>storageKey</code>, <code>sessionPrefix</code>, etc.</li>
+            <li>Build a path graph: each session → its workspacePath → its tmux name → live tmux session (if any).</li>
+          </ul>
+        </article>
+
+        <article class="panel" style="margin-top: 18px;">
+          <span class="tag gold">Phase 2</span>
+          <h3>Plan — concrete actions, quoted before any change</h3>
+          <p>Output is a plan file at <code>~/.agent-orchestrator/migrations/v3-{timestamp}.plan.json</code> + a human-readable summary. With <code>--dry-run</code> the migrator stops here.</p>
+          <pre class="tree">  Plan: V3 migration
+
+  Projects to re-key (V1 bare → V2 {basename}_{hash10}):
+    agent-orchestrator                  → agent-orchestrator_<sha10>  (V1 bare → V2)
+    harshitsinghbhandari-github-io      → harshitsinghbhandari-github-io_<sha10>  (V1 bare → V2)
+
+  Already on V2 (no rename, but path-equality check confirms identity):
+    agent-orchestrator_168566536d       (kept as-is)
+    donna_00956d65b9                    (kept as-is)
+    tools_8779752666                    (kept as-is)
+    graph-isomorphism_d185b44d56        (kept as-is)
+    gemini-live-hackathon               → gemini-live-hackathon_<sha10>  (V1 bare → V2)
+
+  Stranded:
+    111111111114                        → DELETE (no metadata, no sessions)
+    111111111114.migrated               → DELETE (rollback artefact)
+
+  Same-repo prompt:
+    agent-orchestrator (after re-key) and agent-orchestrator_168566536d
+    share the same originUrl. Merge into one project? [Y/n]
+
+  Sessions to rewrite (workspacePath / tmuxName / runtimeHandle):
+    61 in agent-orchestrator/sessions/
+     1 in agent-orchestrator_168566536d/sessions/
+    …
+
+  Tmux sessions to rename (live):
+    ao-ao-orchestrator → ao-orchestrator    (kill + restart on new name)
+    13 others already match {prefix}-{N} format → no-op.
+
+  Worktrees to adopt:
+    ~/.worktrees/agent-orchestrator/ao-101 → projects/{newId}/worktrees/ao-101
+
+  Observability dirs to merge:
+    153 *-observability/ → projects/{id}/observability/ + observability/orphan/
+    Files attributable by projectId in NDJSON: 47
+    Files unattributable: 247  (go to orphan/)
+    Total to delete after merge: 153 dirs
+
+  Schema cleanup:
+    storageKey field: 2 entries to strip
+    Bare hash dirs: 1 (111111111114) — DELETE
+    .migrated dirs: 1 (111111111114.migrated) — DELETE
+
+  Estimated bytes freed: ~120 MB
+  Estimated time: ~12 seconds (mostly atomic renames)</pre>
+        </article>
+
+        <article class="panel" style="margin-top: 18px;">
+          <span class="tag gold">Phase 3</span>
+          <h3>Pre-flight gates — refuse to break live work</h3>
+          <ul>
+            <li>Refuse if any session is <code>state="working"</code> or <code>"detecting"</code> without <code>--force</code>. Print the offenders.</li>
+            <li>Refuse if <code>running.json</code> points at a live PID without <code>--force</code>. Tell user to <code>ao stop</code> first.</li>
+            <li>Snapshot <code>config.yaml</code> → <code>config.yaml.pre-v3-{timestamp}</code>.</li>
+            <li>Verify FS is local (warn if path resolves into Dropbox/iCloud/Google Drive — these break atomic renames silently).</li>
+            <li>Acquire global config lock for the duration.</li>
+          </ul>
+        </article>
+
+        <article class="panel" style="margin-top: 18px;">
+          <span class="tag gold">Phase 4</span>
+          <h3>Execute — atomic, marker-driven, resumable</h3>
+          <p>Each step writes <code>~/.agent-orchestrator/migrations/v3-{timestamp}.progress.json</code> on success. Crash mid-migration: next run reads markers and resumes from the last completed step.</p>
+          <div class="flow">
+            <div class="step">
+              <span class="num">1</span>
+              <b>Re-key V1 entries</b>
+              <span>For every V1 bare-basename entry in registry, compute <code>generateExternalId(realpath, originUrl)</code> and rename to <code>{basename}_{hash10}</code>. V2 entries pass through unchanged. Build <code>oldId → newId</code> map. Detect same-repo duplicates via <code>(originUrl, realpath)</code> for the merge prompt.</span>
+            </div>
+            <div class="step">
+              <span class="num">2</span>
+              <b>Same-repo merge prompt</b>
+              <span>For each merge candidate, ask: keep both? merge sessions? Default = merge.</span>
+            </div>
+            <div class="step">
+              <span class="num">3</span>
+              <b>Path renames</b>
+              <span><code>renameSync(projects/{oldId}, projects/{newId})</code>. Atomic on local FS.</span>
+            </div>
+            <div class="step">
+              <span class="num">4</span>
+              <b>Write identity.json</b>
+              <span>For each project: <code>{ projectId, displayName, sessionPrefix, originUrl, path, realpath, repo, defaultBranch, registeredAt, schemaVersion: 3 }</code>.</span>
+            </div>
+            <div class="step">
+              <span class="num">5</span>
+              <b>Reconcile counter</b>
+              <span>Scan <code>sessions/*.json</code>; max(N) per prefix → <code>.next-session-id.json</code>. Bump to <code>max+1</code>.</span>
+            </div>
+            <div class="step">
+              <span class="num">6</span>
+              <b>Rewrite session JSONs</b>
+              <span>For every <code>sessions/*.json</code>: rewrite <code>workspacePath</code>, <code>tmuxName</code>, <code>runtimeHandle.id</code>, <code>runtimeHandle.data.workspacePath</code>, <code>lifecycle.runtime.handle.*</code>. <code>tmuxName := sessionId</code> always.</span>
+            </div>
+            <div class="step">
+              <span class="num">7</span>
+              <b>Rename tmux sessions</b>
+              <span>For live tmux sessions whose names don't match <code>sessionId</code>: <code>tmux rename-session -t {old} {new}</code>. Failure = warn, continue.</span>
+            </div>
+            <div class="step">
+              <span class="num">8</span>
+              <b>Adopt stranded worktrees</b>
+              <span>For each <code>~/.worktrees/{name}/{sid}</code>: find session JSON whose <code>branch</code> matches; <code>renameSync</code> into <code>projects/{newId}/worktrees/{sid}</code>; rewrite <code>workspacePath</code>; run <code>git worktree repair</code>.</span>
+            </div>
+            <div class="step">
+              <span class="num">9</span>
+              <b>Collapse observability</b>
+              <span>For every <code>{hash}-observability/processes/*.{json,ndjson}</code>: read first record, extract <code>projectId</code>; if attributable, move into <code>projects/{newId}/observability/processes/</code>; else <code>observability/orphan/</code>. Remove empty <code>{hash}-observability/</code> dirs.</span>
+            </div>
+            <div class="step">
+              <span class="num">10</span>
+              <b>Strip storageKey</b>
+              <span>Walk <code>config.yaml</code>; remove <code>storageKey</code> from every entry; bump schemaVersion to 3.</span>
+            </div>
+            <div class="step">
+              <span class="num">11</span>
+              <b>GC bare hash dirs</b>
+              <span>Delete bare <code>{hash}/</code> and <code>{hash}.migrated/</code> at root (after safety check: only delete if empty or if marker confirms migration completed).</span>
+            </div>
+            <div class="step">
+              <span class="num">12</span>
+              <b>Write dead-export manifest</b>
+              <span><code>migrations/v3-{ts}.dead-exports.txt</code> listing every export from §8 with zero callers, ready to feed a follow-up deletion PR.</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel" style="margin-top: 18px;">
+          <span class="tag gold">Phase 5</span>
+          <h3>Verify — assert the new world is consistent</h3>
+          <ul>
+            <li>Every <code>config.yaml</code> projectId matches <code>^[a-z0-9][a-z0-9_-]{0,29}_[0-9a-f]{10}$</code> (V2 format).</li>
+            <li>Every <code>projects/{id}/</code> has <code>identity.json</code> + <code>.next-session-id.json</code>.</li>
+            <li>Every <code>sessions/*.json</code>: <code>workspacePath</code> exists; <code>tmuxName === sessionId</code>; no <code>storageKey</code> reference.</li>
+            <li>No <code>*-observability/</code> dirs remain at root.</li>
+            <li>No <code>~/.worktrees/</code> dirs remain (or, all leaves accounted for in some <code>projects/{id}/worktrees/</code>).</li>
+            <li>For every live tmux session: name matches <code>{prefix}-{N}</code> and references a real session JSON.</li>
+            <li>Roundtrip: re-spawn one session, confirm new <code>{prefix}-{N+1}</code> works without scanning remote.</li>
+          </ul>
+          <p class="note" style="margin-top: 8px;">
+            Failure aborts and prints the violating record. With <code>--repair</code>,
+            the migrator attempts to fix; without, it stops.
+          </p>
+        </article>
+
+        <article class="panel" style="margin-top: 18px;">
+          <span class="tag gold">Phase 6</span>
+          <h3>Report + record — for postmortems and rollback</h3>
+          <pre class="tree">  Migration v3 complete.
+   8 projects re-keyed     (1 same-repo merge applied)
+  62 sessions rewritten
+  13 tmux sessions normalized
+   1 stranded worktree adopted
+ 153 observability dirs collapsed (47 attributed, 247 files to orphan)
+   2 storageKey fields stripped
+   1 bare hash dir + 1 .migrated dir removed
+ ───────────────────────────────────────────────
+ ~120 MB freed
+ 12.3 seconds elapsed
+ 12 dead exports flagged for follow-up PR
+
+ Record written: ~/.agent-orchestrator/migrations/v3-2026-05-07T16-00-00.json
+ Snapshot:       ~/.agent-orchestrator/config.yaml.pre-v3-2026-05-07T16-00-00</pre>
+        </article>
+
+        <article class="panel" style="margin-top: 18px;">
+          <span class="tag green">Rollback</span>
+          <h3><code>ao migrate --rollback</code></h3>
+          <ul>
+            <li>Reads latest <code>migrations/v3-{ts}.json</code>.</li>
+            <li>Reverses path renames in reverse order.</li>
+            <li>Restores <code>config.yaml</code> from snapshot.</li>
+            <li>Re-creates per-config observability dirs from the merged data (best-effort — observability is non-critical and can be lost).</li>
+            <li>Restores <code>*.migrated</code> directories if present.</li>
+            <li>Rolls back the <code>storageKey</code> Zod schema flag (read-only mode for one release before deletion).</li>
+          </ul>
+          <p class="note" style="margin-top: 8px;">
+            Rollback is for the "I ran this and the dashboard broke" case. The
+            forward migrator's verification phase should make rollback rare.
+          </p>
+        </article>
+
+        <article class="panel" style="margin-top: 18px;">
+          <span class="tag blue">Edge cases handled</span>
+          <h3>What this catches that <code>migrate-storage</code> didn't</h3>
+          <ul>
+            <li><b>Stuck orchestrators</b> with legacy tmux names in metadata (the user's <code>orchestrator.json</code> from §7).</li>
+            <li><b>Doubled-prefix tmux names</b> like <code>ao-ao-orchestrator</code> — Phase 7 renames live and Phase 6 fixes metadata.</li>
+            <li><b>Orphan worktrees</b> at <code>~/.worktrees/</code> — Phase 8 adopts them.</li>
+            <li><b>Observability directory leak</b> — Phase 9 attributes by reading the obs JSON's own <code>projectId</code> field.</li>
+            <li><b>Dual-registration of the same repo</b> (the user's <code>ao</code>+<code>ao2</code>) — Phase 2 prompts; default merges.</li>
+            <li><b>storageKey-stripping race</b> from PR #1466 — wrapped in the global config lock.</li>
+            <li><b>Mid-migration crash</b> — markers persist progress; resume on re-run.</li>
+            <li><b>FS sync paths</b> (Dropbox/iCloud) — pre-flight warns; rename atomicity not guaranteed; user is told.</li>
+          </ul>
+        </article>
+
+        <article class="panel" style="margin-top: 18px;">
+          <span class="tag red">What this command intentionally won't do</span>
+          <h3>Out of scope (kept for later)</h3>
+          <ul>
+            <li>Multi-tenant / hosted scaling (10-char hash widening, salting). Not relevant for a single-user CLI tool today.</li>
+            <li>Cross-machine identity reconciliation. Synced <code>~/.agent-orchestrator/</code> is documented as unsupported.</li>
+            <li>Deleting the dead exports themselves — the migrator only emits a manifest. Deletion is a separate PR with its own review.</li>
+            <li>Renaming legacy git branches (<code>session/old-prefix-N</code>) on remote. Branches are on GitHub; we don't rewrite remote refs.</li>
+          </ul>
+        </article>
+      </section>
+
+      <section aria-labelledby="fileformats">
+        <div class="section-head">
+          <h2 id="fileformats">13. Example File Formats — What V3 Actually Writes to Disk</h2>
+          <p class="note">
+            Every file the new system creates, with realistic contents based on the
+            user's current data. Each example carries defense points: why this format,
+            why these fields, why this location. Use these directly in design review.
+          </p>
+        </div>
+
+        <article class="panel">
+          <span class="tag green">New file</span>
+          <h3><code>~/.agent-orchestrator/projects/{projectId}/identity.json</code></h3>
+          <pre class="tree">{
+  "schemaVersion": 3,
+  "projectId": "agent-orchestrator_a1b2c3d4e5",
+  "displayName": "Agent Orchestrator",
+  "originUrl": "https://github.com/composiohq/agent-orchestrator",
+  "path": "/Users/harshitsinghbhandari/Downloads/side-quests/agent-orchestrator",
+  "realpath": "/Users/harshitsinghbhandari/Downloads/side-quests/agent-orchestrator",
+  "repo": "ComposioHQ/agent-orchestrator",
+  "defaultBranch": "main",
+  "sessionPrefix": "ao",
+  "registeredAt": "2026-04-22T08:35:29Z",
+  "registeredBy": "ao-cli@0.5.0",
+  "source": "ao-project-add"
+}</pre>
+          <p><b>Why a separate file</b> (instead of embedding everything in <code>config.yaml</code>):</p>
+          <ul>
+            <li><b>Locality of writes.</b> Project-level state changes (rename, branch update, prefix re-allocation) happen on a single file under the project's lock — no global config contention.</li>
+            <li><b>Survives registry corruption.</b> If <code>config.yaml</code> goes bad, identity is recoverable from each project dir. Reconcile rebuilds the registry from <code>identity.json</code> files.</li>
+            <li><b>One source of truth per concept.</b> <code>config.yaml</code> becomes a thin index (projectId → path); <code>identity.json</code> holds the rest.</li>
+          </ul>
+          <p><b>Why these fields specifically:</b></p>
+          <ul>
+            <li><code>schemaVersion: 3</code> — gates future migrations. Migrator refuses unknown versions; bumps require explicit code review.</li>
+            <li><code>path</code> + <code>realpath</code> stored separately — handles symlinks and case-insensitive FS without re-resolving on every read.</li>
+            <li><code>registeredBy</code> — debug breadcrumb when something looks wrong six months from now ("which version of ao wrote this?").</li>
+            <li><code>sessionPrefix</code> stored, not derived — the canonical fix for the <code>ao</code>/<code>ao2</code> bug. No more <code>localConfig.sessionPrefix</code> short-circuit; the prefix is decided at registration and never recomputed.</li>
+          </ul>
+        </article>
+
+        <article class="panel" style="margin-top: 18px;">
+          <span class="tag green">New file</span>
+          <h3><code>~/.agent-orchestrator/projects/{projectId}/.next-session-id.json</code></h3>
+          <pre class="tree">{
+  "schemaVersion": 3,
+  "next": 133,
+  "lastReconciledAt": "2026-05-07T16:00:00Z",
+  "reconcileSource": "sessions+remote",
+  "highestObserved": {
+    "sessions": "ao-132",
+    "remoteBranches": "ao-129",
+    "tmuxSessions": "ao-132"
+  }
+}</pre>
+          <p><b>Why a counter file</b> (instead of scanning every spawn):</p>
+          <ul>
+            <li><b>O(1) vs O(n).</b> Spawning <code>ao-200</code> currently scans 200 session JSONs and runs <code>git ls-remote</code>. With a counter, it's an atomic increment.</li>
+            <li><b>Monotonic across upstream branch deletion.</b> If somebody deletes <code>session/ao-131</code> on GitHub after the session is archived, the counter still reads 132. No reuse.</li>
+            <li><b>Reconciler protects drift.</b> On <code>ao start</code>, scan <code>sessions/</code> + <code>git ls-remote</code>; if max(observed) ≥ <code>next</code>, advance and update <code>highestObserved</code>. Counter file is the source of truth; scans are the safety net, not the primary read path.</li>
+            <li><b>Crash safety.</b> Atomic write under the project's lock. If a crash leaves it stale, the next start reconciles. Worst case: counter advances by an extra step. Never reuses a number.</li>
+          </ul>
+          <p><b>Why <code>highestObserved</code>:</b> debugging. When something allocates an unexpected number, you can see which source disagreed with the counter and act surgically.</p>
+        </article>
+
+        <article class="panel" style="margin-top: 18px;">
+          <span class="tag blue">Existing file, refined</span>
+          <h3><code>~/.agent-orchestrator/projects/{projectId}/sessions/{sessionId}.json</code></h3>
+          <pre class="tree">{
+  "schemaVersion": 3,
+  "sessionId": "ao-131",
+  "kind": "worker",
+  "projectId": "agent-orchestrator_a1b2c3d4e5",
+  "tmuxName": "ao-131",
+  "branch": "session/ao-131",
+  "workspacePath": "/Users/.../projects/agent-orchestrator_a1b2c3d4e5/worktrees/ao-131",
+  "agent": "claude-code",
+  "createdAt": "2026-05-07T08:43:35.402Z",
+  "displayName": "Investigate hash usage in agent-orchestrator…",
+  "lifecycle": {
+    "version": 2,
+    "session": {
+      "kind": "worker",
+      "state": "working",
+      "reason": "task_in_progress",
+      "startedAt": "2026-05-07T08:44:04.796Z",
+      "completedAt": null,
+      "terminatedAt": null,
+      "lastTransitionAt": "2026-05-07T09:36:40.927Z"
+    },
+    "pr": { "state": "none", "reason": "not_created", "number": null, "url": null, "lastObservedAt": null },
+    "runtime": {
+      "state": "alive",
+      "reason": "process_running",
+      "lastObservedAt": "2026-05-07T09:47:21.336Z",
+      "tmuxName": "ao-131"
+    }
+  },
+  "agentReportedState": "started",
+  "agentReportedAt": "2026-05-07T08:44:04.796Z",
+  "lifecycleEvidence": "activity_signal=valid via_native activity=active at=2026-05-07T09:47:12.431Z",
+  "claudeSessionUuid": "91697c97-3a63-492b-bcb9-d516b8f7fb5a"
+}</pre>
+          <p><b>What changed from V2:</b></p>
+          <ul>
+            <li><b><code>tmuxName</code> always equals <code>sessionId</code>.</b> No more <code>ao-ao-orchestrator</code>. No more <code>{storageKey}-{name}-{prefix}-{N}</code> legacy strings. One rule, validated in the writer.</li>
+            <li><b>Removed <code>runtimeHandle</code> nested object.</b> The old shape had <code>runtimeHandle.id</code>, <code>runtimeHandle.data.workspacePath</code>, plus <code>lifecycle.runtime.handle.data.workspacePath</code> — three places to drift. Now <code>workspacePath</code> + <code>tmuxName</code> at the top level, derived everywhere else.</li>
+            <li><b><code>projectId</code> stamped in every session.</b> Lets observability and migrations attribute files without reading <code>identity.json</code>.</li>
+          </ul>
+          <p><b>Defense points:</b></p>
+          <ul>
+            <li>Existing schema kept compatible — <code>lifecycle.version</code> stays 2 — to minimize the rewrite blast radius. Only top-level fields move.</li>
+            <li>Schema validated by Zod at write time. Reads are tolerant: missing optional fields filled with defaults.</li>
+            <li>Atomic write via <code>atomicWriteFileSync</code> (already in core). Crash mid-write doesn't truncate.</li>
+          </ul>
+        </article>
+
+        <article class="panel" style="margin-top: 18px;">
+          <span class="tag blue">Existing file, refined</span>
+          <h3><code>~/.agent-orchestrator/projects/{projectId}/orchestrator.json</code></h3>
+          <pre class="tree">{
+  "schemaVersion": 3,
+  "sessionId": "ao-orchestrator",
+  "kind": "orchestrator",
+  "projectId": "agent-orchestrator_a1b2c3d4e5",
+  "tmuxName": "ao-orchestrator",
+  "branch": "orchestrator/ao-orchestrator",
+  "workspacePath": "/Users/.../projects/agent-orchestrator_a1b2c3d4e5/worktrees/ao-orchestrator",
+  "agent": "claude-code",
+  "createdAt": "2026-04-25T17:32:56.275Z",
+  "role": "orchestrator",
+  "prAutoDetect": false,
+  "lifecycle": {
+    "version": 2,
+    "session": { "kind": "orchestrator", "state": "working", "reason": "task_in_progress", … },
+    "pr": { "state": "none", "reason": "not_created" },
+    "runtime": { "state": "alive", "reason": "process_running", "tmuxName": "ao-orchestrator" }
+  }
+}</pre>
+          <p><b>Why a separate <code>orchestrator.json</code> instead of treating it as just another session:</b></p>
+          <ul>
+            <li>Singleton per project — different lifecycle, different recovery semantics (<code>orchestratorSessionStrategy: "delete"</code> vs sessions which archive).</li>
+            <li>Different prompt template (<code>orchestrator-prompt-{sessionId}.md</code> vs <code>worker-prompt-{sessionId}.md</code>).</li>
+            <li>Re-spawn on terminal failure: an orchestrator at state <code>terminated</code> gets re-incarnated as <code>{prefix}-orchestrator-2</code>; sessions don't.</li>
+          </ul>
+          <p><b>What's fixed from the user's actual disk</b> (the §7 smoking artefact): the legacy
+            <code>tmuxName: "66c66786e971-agent-orchestrator-ao-orchestrator-8"</code> and the
+            <code>workspacePath: "/Users/.../.worktrees/agent-orchestrator/ao-orchestrator-8"</code>
+            both get rewritten by Phase 4 step 6 of <code>ao migrate</code>. After migration, that
+            stuck orchestrator can be probed again and either recovered or marked terminated.</p>
+        </article>
+
+        <article class="panel" style="margin-top: 18px;">
+          <span class="tag blue">Existing file, simplified</span>
+          <h3><code>~/.agent-orchestrator/config.yaml</code></h3>
+          <pre class="tree"># Global registry — index of projectId → metadata.
+# Per-project state lives in projects/{projectId}/identity.json.
+schemaVersion: 3
+
+agents:
+  default: claude-code
+
+projects:
+  agent-orchestrator_a1b2c3d4e5:
+    path: /Users/harshitsinghbhandari/Downloads/side-quests/agent-orchestrator
+    displayName: Agent Orchestrator
+    sessionPrefix: ao
+    registeredAt: 1776846929
+    source: ao-project-add
+
+  donna_00956d65b9:
+    path: /Users/harshitsinghbhandari/Downloads/side-quests/donna
+    displayName: Donna
+    sessionPrefix: don
+    registeredAt: 1777915385
+    source: ao-project-add
+
+  tools_8779752666:
+    path: /Users/harshitsinghbhandari/Downloads/main-quests/tools
+    displayName: Tools
+    sessionPrefix: too
+    registeredAt: 1777730881
+    source: ao-project-add
+
+notifiers:
+  - desktop</pre>
+          <p><b>What's removed from the V2 config:</b></p>
+          <ul>
+            <li><b><code>storageKey</code> field</b> — gone. The 2 entries that still had it (<code>agent-orchestrator</code>, <code>harshitsinghbhandari-github-io</code>) get cleaned during migrate Phase 4 step 10.</li>
+            <li><b>Bare-basename projectId keys</b> — gone. Re-keyed to V2 <code>{basename}_{hash10}</code>.</li>
+            <li><b>Inline behavior fields</b> (repo, defaultBranch, originUrl) — moved to <code>identity.json</code>. Registry stays a thin index.</li>
+          </ul>
+          <p><b>Why YAML for this file</b> (and JSON for the others):</p>
+          <ul>
+            <li>Users edit <code>config.yaml</code> by hand. YAML's comments and indentation hierarchy serve them.</li>
+            <li>Per-session, per-project, per-counter files are machine-written, machine-read. JSON's strictness avoids YAML parse ambiguities (the famous Norway problem, time/date coercion, etc.).</li>
+            <li><code>schemaVersion: 3</code> at the top — explicit, gates the loader.</li>
+          </ul>
+        </article>
+
+        <article class="panel" style="margin-top: 18px;">
+          <span class="tag blue">Existing file</span>
+          <h3><code>~/.agent-orchestrator/running.json</code></h3>
+          <pre class="tree">{
+  "pid": 51353,
+  "configPath": "/Users/.../side-quests/agent-orchestrator/agent-orchestrator.yaml",
+  "port": 3000,
+  "startedAt": "2026-05-07T09:36:40.951Z",
+  "projects": [
+    "agent-orchestrator_a1b2c3d4e5"
+  ]
+}</pre>
+          <p><b>What changed:</b> <code>projects[]</code> now references projectIds in V2 form. The user's actual file currently has the V1 bare-basename <code>agent-orchestrator</code>; migrate Phase 4 step 10 rewrites it.</p>
+          <p><b>Why this file exists:</b> single-instance guard for <code>ao start</code>. The PID gate prevents two ao processes from racing on the global config lock.</p>
+        </article>
+
+        <article class="panel" style="margin-top: 18px;">
+          <span class="tag blue">Existing file</span>
+          <h3><code>~/.agent-orchestrator/last-stop.json</code></h3>
+          <pre class="tree">{
+  "schemaVersion": 3,
+  "stoppedAt": "2026-05-07T09:14:54.872Z",
+  "projectId": "agent-orchestrator_a1b2c3d4e5",
+  "sessionIds": [],
+  "otherProjects": [
+    {
+      "projectId": "donna_00956d65b9",
+      "sessionIds": ["don-3", "don-4"]
+    }
+  ]
+}</pre>
+          <p><b>Defense points:</b></p>
+          <ul>
+            <li><code>otherProjects</code> field carries cross-project session info — written by <code>ao stop</code> with no args, consumed by next <code>ao start</code> for the "restore previously killed sessions?" prompt.</li>
+            <li>Stored projectIds match the V3 format. After migration, the file is re-keyed by Phase 4 step 10.</li>
+            <li>Gets cleared (or rewritten) on every <code>ao stop</code>; never grows.</li>
+          </ul>
+        </article>
+
+        <article class="panel" style="margin-top: 18px;">
+          <span class="tag green">New file</span>
+          <h3><code>~/.agent-orchestrator/projects/{projectId}/observability/processes/{component}-{pid}.json</code></h3>
+          <pre class="tree">{
+  "schemaVersion": 1,
+  "component": "session-manager",
+  "pid": 80535,
+  "projectId": "agent-orchestrator_a1b2c3d4e5",
+  "updatedAt": "2026-05-07T09:47:30.684Z",
+  "metrics": {
+    "spawn::worker": { "total": 8, "success": 8, "failure": 0, "lastAt": "2026-05-07T09:36:40Z" },
+    "kill::worker":  { "total": 2, "success": 2, "failure": 0, "lastAt": "2026-05-07T08:50:00Z" }
+  },
+  "traces": [
+    {
+      "id": "0b179ad8-61dd-472e-9876-f57a7213b67c",
+      "timestamp": "2026-05-07T09:47:21.336Z",
+      "operation": "session.probe",
+      "outcome": "success",
+      "sessionId": "ao-131",
+      "data": { "tmux_alive": true, "agent_pid": 81234 }
+    }
+  ]
+}</pre>
+          <p><b>The single biggest change in this whole proposal:</b></p>
+          <ul>
+            <li><b>Was:</b> <code>~/.agent-orchestrator/{generateConfigHash(configPath)}-observability/processes/{component}-{pid}.{json,ndjson}</code>. Hash keyed on the path of the YAML file. Every PR worktree has its own YAML at a unique path → new directory every session → 153 dirs and counting.</li>
+            <li><b>Is:</b> attribute by <code>projectId</code> at write time, file lives inside the project's own dir. The hash that produced 153 dirs goes away.</li>
+            <li><b>Files we can't attribute</b> (e.g. early lifecycle traces before projectId is known): <code>~/.agent-orchestrator/observability/orphan/</code>. Bounded by retention policy, not by user activity.</li>
+          </ul>
+          <p><b>Why retain the per-PID file model:</b> matches the existing observability writer (<code>core/src/observability.ts:198-209</code>) — minimal change, just the parent directory differs. Migration Phase 4 step 9 reads the existing files' <code>projectId</code> field and routes them to the right project.</p>
+        </article>
+
+        <article class="panel" style="margin-top: 18px;">
+          <span class="tag green">New file</span>
+          <h3><code>~/.agent-orchestrator/migrations/v3-{timestamp}.json</code></h3>
+          <pre class="tree">{
+  "schemaVersion": 3,
+  "migrationId": "v3-2026-05-07T16-00-00",
+  "startedAt": "2026-05-07T16:00:00.000Z",
+  "completedAt": "2026-05-07T16:00:12.347Z",
+  "aoVersion": "0.5.0",
+  "fromVersions": { "schema": 2, "layout": "mixed-v1-v2" },
+  "toVersions":   { "schema": 3, "layout": "v3" },
+
+  "projectRekeys": [
+    { "from": "agent-orchestrator",
+      "to":   "agent-orchestrator_a1b2c3d4e5",
+      "fromPath": "/Users/.../.agent-orchestrator/projects/agent-orchestrator",
+      "toPath":   "/Users/.../.agent-orchestrator/projects/agent-orchestrator_a1b2c3d4e5",
+      "reason":   "v1-bare-basename" },
+    { "from": "harshitsinghbhandari-github-io",
+      "to":   "harshitsinghbhandari-github-io_2c8f4a91d3",
+      "reason": "v1-bare-basename" }
+  ],
+
+  "sameRepoMerges": [
+    { "kept":   "agent-orchestrator_a1b2c3d4e5",
+      "merged": "agent-orchestrator_168566536d",
+      "originUrl": "https://github.com/composiohq/agent-orchestrator",
+      "userConfirmed": true,
+      "sessionsTransferred": 1 }
+  ],
+
+  "sessionRewrites": { "count": 62, "changedFields": ["tmuxName", "workspacePath", "schemaVersion"] },
+  "tmuxRenames":     [ { "from": "ao-ao-orchestrator", "to": "ao-orchestrator", "outcome": "renamed" } ],
+  "worktreeAdoptions": [ { "from": "/Users/.../.worktrees/agent-orchestrator/ao-101",
+                           "to":   "/Users/.../projects/agent-orchestrator_a1b2c3d4e5/worktrees/ao-101" } ],
+
+  "observability": {
+    "dirsRemoved": 153,
+    "filesAttributed": 47,
+    "filesOrphaned": 247,
+    "bytesFreed": 124857600
+  },
+
+  "schemaCleanup": {
+    "storageKeyFieldsStripped": 2,
+    "bareHashDirsRemoved": ["111111111114"],
+    "migratedDirsRemoved":  ["111111111114.migrated"]
+  },
+
+  "deadExportsManifest": [
+    "deriveStorageKey", "generateTmuxName", "parseTmuxName", "getProjectBaseDir",
+    "getSessionsDir", "getWorktreesDir", "getFeedbackReportsDir", "getArchiveDir",
+    "getOriginFilePath", "validateAndStoreOrigin", "requireStorageKey", "generateConfigHash"
+  ],
+
+  "rollback": {
+    "snapshotConfigPath": "~/.agent-orchestrator/config.yaml.pre-v3-2026-05-07T16-00-00",
+    "supported": true,
+    "expiresAt": "2026-06-07T16:00:00Z"
+  }
+}</pre>
+          <p><b>Why a single record file:</b></p>
+          <ul>
+            <li><b>Audit trail.</b> Six months from now, "why is this projectId different from what I expected?" has a written answer.</li>
+            <li><b>Rollback driver.</b> <code>ao migrate --rollback</code> reads this file in reverse to undo the work. No guessing.</li>
+            <li><b>Postmortem source.</b> If a migration goes wrong, the record + the snapshot config + the markers are enough to reconstruct any step.</li>
+            <li><b>Bounded retention.</b> <code>expiresAt</code> drives a sweep — old records get archived, not kept forever.</li>
+          </ul>
+          <p><b>Why <code>deadExportsManifest</code>:</b> the migrator doesn't delete the dead exports itself (deletion is risky and deserves its own PR + review). It produces a list, ready to feed <code>codemod</code> or a manual deletion patch. The list is <em>computed</em> by grepping at migrate time — if a future commit makes one of these live again, it won't be on the list.</p>
+        </article>
+
+        <article class="panel" style="margin-top: 18px;">
+          <span class="tag green">New file</span>
+          <h3><code>~/.agent-orchestrator/migrations/v3-{timestamp}.progress.json</code></h3>
+          <pre class="tree">{
+  "schemaVersion": 3,
+  "migrationId": "v3-2026-05-07T16-00-00",
+  "phase": "execute",
+  "currentStep": 7,
+  "completedSteps": [
+    { "step": 1, "name": "rekey-v1-entries",   "completedAt": "2026-05-07T16:00:01.234Z" },
+    { "step": 2, "name": "merge-prompt",        "completedAt": "2026-05-07T16:00:03.012Z" },
+    { "step": 3, "name": "path-renames",        "completedAt": "2026-05-07T16:00:04.501Z" },
+    { "step": 4, "name": "write-identity-json", "completedAt": "2026-05-07T16:00:05.847Z" },
+    { "step": 5, "name": "reconcile-counter",   "completedAt": "2026-05-07T16:00:06.124Z" },
+    { "step": 6, "name": "rewrite-sessions",    "completedAt": "2026-05-07T16:00:09.992Z" }
+  ],
+  "inProgressStep": { "step": 7, "name": "rename-tmux-sessions", "startedAt": "2026-05-07T16:00:10.001Z" },
+  "interruptedAt": null
+}</pre>
+          <p><b>Defense points:</b></p>
+          <ul>
+            <li><b>Resumability.</b> Crash mid-step? Re-running <code>ao migrate</code> reads this file, sees <code>currentStep=7, inProgressStep</code>, retries from step 7.</li>
+            <li><b>One file, atomic write per step.</b> No partial state. Either a step completed (it's in <code>completedSteps</code>) or it didn't (it's in <code>inProgressStep</code>).</li>
+            <li><b>Cleared on success.</b> When <code>completedAt</code> on the parent record file fires, this progress file is moved to <code>{migrationId}.progress.completed.json</code> for postmortem; a clean run leaves it there for the rollback window.</li>
+          </ul>
+        </article>
+
+        <article class="panel" style="margin-top: 18px;">
+          <span class="tag blue">Existing files, location only</span>
+          <h3>Worker / orchestrator prompt files</h3>
+          <pre class="tree">~/.agent-orchestrator/projects/agent-orchestrator_a1b2c3d4e5/
+├── prompts/
+│   ├── worker-prompt-ao-131.md
+│   ├── worker-prompt-ao-132.md
+│   └── orchestrator-prompt-ao-orchestrator.md</pre>
+          <p><b>Change vs today:</b> moved into a <code>prompts/</code> subdirectory instead of sitting alongside <code>sessions/</code> and <code>worktrees/</code>. The user's current project has 34 of these as siblings to <code>sessions/</code>; cleaner with a folder.</p>
+          <p><b>Why keep them as separate files</b> (instead of embedding the prompt in the session JSON):</p>
+          <ul>
+            <li>Prompts are large (4–9 KB) and never re-read after spawn. Keeping them out of the session JSON keeps the JSON cheap to parse on every poll.</li>
+            <li>Useful for postmortems — you can <code>cat worker-prompt-ao-131.md</code> without parsing JSON.</li>
+            <li>The agent's launch command takes a file path; no transformation needed.</li>
+          </ul>
+        </article>
+
+        <article class="panel" style="margin-top: 18px;">
+          <span class="tag blue">Full layout, post-migration</span>
+          <h3>What <code>tree ~/.agent-orchestrator</code> looks like</h3>
+          <pre class="tree">~/.agent-orchestrator/
+├── config.yaml                           # YAML, schemaVersion: 3, thin index
+├── running.json                          # JSON, single-instance guard
+├── last-stop.json                        # JSON, restore-on-next-start state
+│
+├── projects/
+│   ├── agent-orchestrator_a1b2c3d4e5/
+│   │   ├── identity.json                 # NEW — project metadata
+│   │   ├── .next-session-id.json         # NEW — monotonic counter
+│   │   ├── orchestrator.json             # singleton orchestrator session
+│   │   ├── sessions/
+│   │   │   ├── ao-100.json
+│   │   │   ├── ao-101.json
+│   │   │   └── …(60 more)
+│   │   ├── worktrees/
+│   │   │   ├── ao-131/                   # actual git worktree
+│   │   │   └── …(14 more)
+│   │   ├── prompts/                      # NEW location
+│   │   │   ├── worker-prompt-ao-131.md
+│   │   │   └── orchestrator-prompt-ao-orchestrator.md
+│   │   └── observability/
+│   │       └── processes/
+│   │           ├── session-manager-51353.json
+│   │           └── session-manager-51353.ndjson
+│   ├── donna_00956d65b9/
+│   ├── tools_8779752666/
+│   ├── gemini-live-hackathon_5c2a8f4b91/
+│   ├── graph-isomorphism_d185b44d56/
+│   └── harshitsinghbhandari-github-io_2c8f4a91d3/
+│
+├── observability/
+│   └── orphan/                           # unattributable obs files
+│
+└── migrations/
+    ├── v3-2026-05-07T16-00-00.json       # migration record
+    ├── v3-2026-05-07T16-00-00.progress.completed.json
+    └── config.yaml.pre-v3-2026-05-07T16-00-00  # rollback snapshot</pre>
+          <p><b>Defense points (the "before/after" pitch):</b></p>
+          <ul>
+            <li><b>Was 153 root-level entries</b> (mostly <code>*-observability</code>); <b>is 6</b> (<code>config.yaml</code>, <code>running.json</code>, <code>last-stop.json</code>, <code>projects/</code>, <code>observability/</code>, <code>migrations/</code>).</li>
+            <li><b>Was 297 MB with no clear ownership</b>; <b>is the same data fully attributed</b> per-project, with the obs leak fixed.</li>
+            <li><b>Was 3 places metadata could disagree</b> (<code>config.yaml</code>, session JSON, <code>orchestrator.json</code>); <b>is 1 source of truth per concept</b>: registry maps id→path, project owns its identity, sessions own their state.</li>
+          </ul>
+        </article>
+
+        <article class="panel" style="margin-top: 18px;">
+          <span class="tag gold">Cross-cutting defense</span>
+          <h3>Three defense points to lead the team review with</h3>
+          <ul>
+            <li><b>"This isn't a redesign — it's the missing other half of PR #1466."</b> V2 introduced the storage layout but didn't finish the cleanup. <code>storageKey</code> stayed in the schema. <code>generateConfigHash</code> kept the observability dir leak alive. Three prefix allocators kept disagreeing. V3 finishes the V2 promise.</li>
+            <li><b>"Migration is forward-compatible by design."</b> Every new file carries <code>schemaVersion: 3</code>. The loader refuses unknown versions. The next migration (V4, whenever it happens) inherits the same plan/progress/record/rollback machinery — we're not building a one-off.</li>
+            <li><b>"Defense in depth on a single laptop, optionality for hosted later."</b> The whole proposal is single-user safe right now. The places that need to change for hosted multi-tenant — wider hashes (P10), salting (P11), distributed counter (P9), cross-machine lock (P12) — are isolated to specific files (<code>generateExternalId</code>, <code>.next-session-id.json</code>, <code>config.yaml</code> lock). We don't pay for them today; we don't preclude them either.</li>
+          </ul>
+        </article>
+      </section>
+
+      </div><!-- /tab-fix -->
+
+      <section class="summary" aria-labelledby="verdict">
+        <h2 id="verdict">Verdict — and What to Build Next</h2>
+        <p>
+          AO's cryptographic primitives are correct: SHA-256, HMAC with
+          <code>timingSafeEqual</code>, normalized inputs, atomic writes. The system
+          built on top of them is not. Three project-identity formats, four prefix-collision
+          schemes, three live tmux conventions, 153 leaked observability directories, a
+          dozen dead public exports, and metadata that points at directories that don't
+          exist. This isn't a hash bug. It's a layering bug — content-addressed identity
+          was used where a counter or an opaque ID would have served.
+        </p>
+        <div class="verdict">
+          <div class="verdict-item">
+            <b>Score today: 72/100</b>
+            <span>Crypto: 90. Identity system: 60. Combined: 72. Held back almost entirely by surface-level inconsistency, not crypto choice.</span>
+          </div>
+          <div class="verdict-item">
+            <b>The proposal collapses 4 layers into 1 rule each</b>
+            <span>V2 <code>{basename}_{hash10}</code> kept and applied uniformly. One canonical prefix allocator. Stored counter for sessionId. <code>tmuxName ≡ sessionId</code>. Observability in the project dir.</span>
+          </div>
+          <div class="verdict-item">
+            <b><code>ao migrate</code> is one pass</b>
+            <span>Inventory → plan → pre-flight → 12 atomic steps with markers → verify → record. Idempotent. Resumable. Rollback-aware.</span>
+          </div>
+          <div class="verdict-item">
+            <b>After V3: ~85/100</b>
+            <span>Hash sites become surgical; identity system becomes coherent. Hosted/multi-tenant later may want to widen the 10-char hash, but everything below the projectId layer is structural and finally clean.</span>
+          </div>
+        </div>
+      </section>
+    </main>
+    <script>
+      (function () {
+        var buttons = document.querySelectorAll('.tabs button[data-tab-target]');
+        var panels = document.querySelectorAll('.tab-panel[data-tab]');
+        function activate(target) {
+          buttons.forEach(function (b) {
+            b.setAttribute('aria-selected', b.dataset.tabTarget === target ? 'true' : 'false');
+          });
+          panels.forEach(function (p) {
+            if (p.dataset.tab === target) p.removeAttribute('hidden');
+            else p.setAttribute('hidden', '');
+          });
+          if (history.replaceState) {
+            history.replaceState(null, '', '#' + target);
+          }
+        }
+        buttons.forEach(function (b) {
+          b.addEventListener('click', function () { activate(b.dataset.tabTarget); window.scrollTo({ top: 0, behavior: 'smooth' }); });
+        });
+        var initial = (location.hash || '').replace(/^#/, '');
+        if (initial && document.querySelector('[data-tab="' + initial + '"]')) activate(initial);
+      })();
+    </script>
+  </body>
+</html>
