@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400&family=Outfit:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+            body{font-family:'Cormorant Garamond',Georgia,serif;max-width:720px;margin:48px auto;padding:0 24px;color:#1a1a1a;line-height:1.9;background:#faf8f5;}
+            h1{font-size:2.5em;font-weight:700;margin:0 0 0.5em;letter-spacing:-0.03em;}
+            h2{font-size:1.6em;font-weight:600;margin:2em 0 0.75em;padding-bottom:0.5em;border-bottom:1px solid #e8e4dd;}
+            h3{font-family:'Outfit',sans-serif;font-size:1.1em;font-weight:600;margin:1.75em 0 0.75em;letter-spacing:0.02em;}
+            p{font-size:1.1em;margin:1em 0;text-align:justify;}
+            a{color:#c45c3e;text-decoration:none;border-bottom:1px solid currentColor;}
+            code{font-family:'JetBrains Mono',monospace;font-size:0.85em;background:#f5f2ed;padding:3px 8px;border-radius:3px;color:#9a3d25;border:1px solid #e8e4dd;}
+            pre{background:#1a1a1a;color:#f5f2ed;padding:24px;border-radius:4px;overflow-x:auto;margin:1.5em 0;line-height:1.6;border-top:3px solid #c45c3e;}
+            pre code{background:none;color:inherit;padding:0;border:none;}
+            blockquote{font-style:italic;color:#6b6b6b;border-left:3px solid #c45c3e;padding-left:24px;margin:1.5em 0;}
+            ul,ol{margin:1em 0;padding-left:1.5em;}
+            li{margin:0.5em 0;}
+            table{width:100%;border-collapse:collapse;margin:1.5em 0;font-family:'Outfit',sans-serif;font-size:0.9em;}
+            th{background:#f5f2ed;padding:14px 16px;text-align:left;font-weight:600;border-bottom:2px solid #1a1a1a;}
+            td{padding:14px 16px;border-bottom:1px solid #e8e4dd;}
+            hr{border:none;height:1px;background:#e8e4dd;margin:3em 0;}
+            img{max-width:100%;height:auto;border-radius:4px;margin:1.5em 0;}
+            .mermaid-diagram{margin:1.5em 0;text-align:center;}
+        </style>
+</head>
+<body>
+<h1>AO messaging redesign — research findings</h1>
+<p><strong>Author:</strong> Harshit (with Claude)
+<strong>Date:</strong> 2026-05-10
+<strong>Status:</strong> Findings ready for team review; no code shipped yet.</p>
+<h2>TL;DR</h2>
+<p>We're replacing <code>tmux send-keys</code> for orchestrator → agent notifications. The original assumption — <em>"file-based for everyone"</em> — was wrong. The right answer is <strong>per-agent transports, dispatched from each agent plugin's <code>sendMessage</code></strong>. One common record (<code>inbox.jsonl</code> for durability), different delivery mechanisms.</p>
+<table>
+<thead>
+<tr>
+<th>Agent</th>
+<th>Transport</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Claude Code</strong></td>
+<td>bg-watcher → process exit wakes agent</td>
+<td>✅ proven end-to-end</td>
+</tr>
+<tr>
+<td><strong>Copilot CLI</strong></td>
+<td>bg-watcher (same as Claude Code)</td>
+<td>✅ proven by Harshit on Copilot</td>
+</tr>
+<tr>
+<td><strong>OpenCode</strong></td>
+<td><code>POST /session/{id}/prompt_async</code> to its HTTP server</td>
+<td>✅ proven end-to-end</td>
+</tr>
+<tr>
+<td><strong>Codex CLI</strong></td>
+<td>bg-bash is broken; keep send-keys for now</td>
+<td>❌ blocked on <a href="https://github.com/openai/codex/issues/22003">openai/codex#22003</a></td>
+</tr>
+<tr>
+<td><strong>Cursor</strong></td>
+<td>bg-process completion does not auto-inject; needs send-keys equivalent</td>
+<td>❌ empirically verified — same bucket as Codex</td>
+</tr>
+</tbody></table>
+<p>OpenCode integration is <strong>strictly easier</strong> than Claude Code's: no sidecar process inside the agent's session, no inbox file required for delivery — the orchestrator just hits an HTTP endpoint.</p>
+<hr>
+<h2>What we set out to solve</h2>
+<p>The orchestrator needs to deliver structured notifications to running agents — CI failed, review came in, PR ready to merge, etc. Today this goes through <code>runtime.sendMessage</code>, which for tmux runtime calls <code>tmux send-keys</code> and pastes the message into the agent's pty (<code>packages/plugins/runtime-tmux/src/index.ts:132-169</code>).</p>
+<p><strong>Problems with the current path</strong> (admitted in code comments):</p>
+<ul>
+<li>Two failure points in the long-message path: temp-file write, tmux buffer rotation, and a 300 ms sleep before pressing Enter — under load, Enter can land before the paste finishes.</li>
+<li><code>sendWithConfirmation</code> (<code>packages/core/src/session-manager.ts:2525-2565</code>) explicitly returns success if it can't <em>confirm</em> delivery, because failing led to duplicate messages on retry. So "delivered" really means "we tried."</li>
+<li>Races with a human typing in the same tmux pane.</li>
+<li>No idempotency — orchestrator crash between send and dispatch-hash update means the same message gets re-sent on next poll.</li>
+<li>tmux-specific; doesn't compose well with <code>runtime-process</code> or future Windows pty-host paths.</li>
+</ul>
+<p><strong>Goal:</strong> replace it with something where the data is structured, the delivery is auditable, and the wake-up doesn't depend on terminal byte streams.</p>
+<hr>
+<h2>Experiment 1 — Claude Code: file watcher + bg-process exit</h2>
+<h3>The pattern</h3>
+<p>A small Node script runs in the background as a one-shot watcher. It uses <code>fs.watchFile</code> to block until the target file (<code>./inbox.jsonl</code>) grows past a known offset. When new bytes arrive, it reads them, prints one JSON line to stdout, and exits with code 0.</p>
+<p>Claude Code's runtime auto-injects a <code>&lt;task-notification&gt;</code> system reminder into the agent's context <strong>the moment a backgrounded shell command exits, while the agent is idle.</strong> The agent reads the new inbox content, treats it as a user prompt, and acts. Latency: ~500 ms (the <code>watchFile</code> poll interval).</p>
+<h3>What we proved</h3>
+<p>Live-tested in this session. Watcher script: ~30 lines of Node, no installs (uses built-in <code>fs.watchFile</code>, equivalent to chokidar's underlying mechanism on macOS). Spawned as <code>Bash(run_in_background: true)</code>. Wrote to <code>inbox.jsonl</code> from a side terminal — agent received the wake-up, read the new lines, processed as user input, respawned watcher with the new offset. Loop runs forever.</p>
+<h3>Caveats</h3>
+<ul>
+<li>Wake-up only fires when the agent is <strong>idle</strong>. If the agent is mid-tool-call, the notification queues and fires when the call returns. Fine for AO's use case (CI failure landing 10 s late doesn't matter).</li>
+<li>Agent has to remember to respawn the watcher each cycle. A single restart instruction in the system prompt handles this.</li>
+</ul>
+<h3>Watcher script (canonical)</h3>
+<pre><code class="language-js">#!/usr/bin/env node
+const fs = require("node:fs");
+const [, , filePath, fromArg] = process.argv;
+const fromOffset = Number.parseInt(fromArg ?? "0", 10) || 0;
+const readNew = () =&gt; {
+  const size = fs.statSync(filePath).size;
+  if (size &lt;= fromOffset) return null;
+  const fd = fs.openSync(filePath, "r");
+  const buf = Buffer.alloc(size - fromOffset);
+  fs.readSync(fd, buf, 0, buf.length, fromOffset);
+  fs.closeSync(fd);
+  return { newOffset: size, content: buf.toString("utf8") };
+};
+const emit = (p) =&gt; { process.stdout.write(JSON.stringify(p) + "\n"); process.exit(0); };
+const initial = readNew();
+if (initial?.content) emit({ event: "initial", ...initial });
+fs.watchFile(filePath, { interval: 500 }, () =&gt; {
+  const r = readNew();
+  if (r?.content) { fs.unwatchFile(filePath); emit({ event: "change", ...r }); }
+});
+setTimeout(() =&gt; emit({ event: "timeout", newOffset: fromOffset, content: "" }), 30 * 60 * 1000).unref();
+</code></pre>
+<hr>
+<h2>Per-agent compatibility — what works, what doesn't</h2>
+<p>The "wake-up channel from external event to agent's REPL" is the bottleneck. Here's what we found, both empirically and via the source.</p>
+<h3>✅ Claude Code — works natively</h3>
+<p><code>run_in_background: true</code> on Bash + auto <code>&lt;task-notification&gt;</code> injection. Already used in production by AO in this session.</p>
+<h3>✅ Copilot CLI — works (surprising win)</h3>
+<p>Public docs and open issues (<a href="https://github.com/github/copilot-cli/issues/2682">github/copilot-cli#2682</a>) suggested bg shell completion notification only worked for <em>MCP background agents</em>, not bare bg shells. <strong>Harshit empirically verified that bare bg shell completion does wake the agent</strong> — works the same way as Claude Code with the same watcher script.</p>
+<h3>✅ OpenCode — works via HTTP, not via watcher (see Experiment 2 below)</h3>
+<h3>❌ Codex CLI — broken</h3>
+<p>Bg-bash exists but the agent harness fails to detect process completion: known stuck-loop bug (<a href="https://github.com/openai/codex/issues/14314">openai/codex#14314</a>, "Waited for background terminal" infinite log spam). Proper bg-session support still open at <a href="https://github.com/openai/codex/issues/3968">openai/codex#3968</a>. Harshit filed a duplicate report with the AO use case at <a href="https://github.com/openai/codex/issues/22003">openai/codex#22003</a>.</p>
+<p>For Codex we <strong>must</strong> keep the existing send-keys-equivalent until upstream fixes land.</p>
+<h3>❌ Cursor — bg-completion does not wake the agent (empirically verified 2026-05-10)</h3>
+<p>Tested live with <code>cursor-agent</code> v1.x. Spawned the same Node <code>fs.watchFile</code> watcher as a backgrounded shell command from inside the agent's session, ended the agent's turn, then appended a line to <code>./inbox.jsonl</code> from outside. The watcher detected the change, exited cleanly with the expected JSON payload (<code>event:"change"</code>, <code>newOffset:170</code>, content matching), but <strong>cursor-agent's harness did not inject the output into the model's context.</strong> The agent only acted on the watcher's payload after the human typed a fresh message — at which point the harness made the prior bg-job's stdout available, but as a tool-result lookup, not a wake-up.</p>
+<p>The historical bug Harshit asked us to investigate (<a href="https://forum.cursor.com/t/agent-doesnt-wait-for-terminal-command-to-finish/122392">forum.cursor.com #122392</a>) was resolved in v1.3.7 (July 2025) — that one was about <em>foreground</em> command completion detection. The wake-up-on-bg-exit gap is a separate, still-open architectural issue.</p>
+<p><strong>Implication:</strong> Cursor goes in the same bucket as Codex — orchestrator → agent delivery needs a send-keys-style nudge until Cursor adds a wake-up channel. There's no HTTP server like OpenCode (we checked).</p>
+<hr>
+<h2>Experiment 2 — OpenCode: orchestrator hits the HTTP API</h2>
+<h3>The discovery</h3>
+<p>OpenCode auto-starts a Hono HTTP server on port 4096 (or <code>--port &lt;N&gt;</code>) when the TUI launches, and <code>opencode serve</code> runs it headlessly. The server exposes:</p>
+<ul>
+<li><code>POST /session/{sessionID}/prompt</code> — send message (streams response)</li>
+<li><code>POST /session/{sessionID}/prompt_async</code> — fire-and-forget</li>
+<li><code>POST /session/{sessionID}/abort</code> — cancel</li>
+<li><code>GET /session/{sessionID}/message</code> — list messages (audit)</li>
+<li><code>noReply: true</code> request flag — inject context without forcing a turn</li>
+</ul>
+<p>This is <strong>already a structured external messaging channel</strong>. We don't need to invent one.</p>
+<h3>What we proved</h3>
+<p>Live-tested with Harshit's running TUI bound to <code>http://127.0.0.1:4096</code>:</p>
+<pre><code class="language-sh">curl -X POST http://127.0.0.1:4096/session/ses_1ef2ff3d4ffe8HKxAfuQtDWNTC/prompt_async \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "parts":[{"type":"text","text":"Hello from AO orchestrator!"}],
+    "model":{"providerID":"zai-coding-plan","modelID":"glm-5.1"}
+  }'
+# → HTTP 204
+</code></pre>
+<p>Server stored the user message. Agent ran inference. Response streamed back. Verified via <code>GET /session/.../message</code>.</p>
+<h3>Implication for AO's <code>agent-opencode</code> plugin</h3>
+<p>The OpenCode plugin's <code>sendMessage</code> becomes ~30 lines:</p>
+<pre><code class="language-ts">async sendMessage(handle: RuntimeHandle, message: string): Promise&lt;void&gt; {
+  const port = handle.data.opencodePort as number;
+  const sessionID = handle.data.opencodeSessionID as string;
+  const model = handle.data.opencodeModel as { providerID: string; modelID: string };
+  await fetch(`http://127.0.0.1:${port}/session/${sessionID}/prompt_async`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      parts: [{ type: "text", text: message }],
+      model,
+    }),
+  });
+}
+</code></pre>
+<p><code>agent.getLaunchCommand</code> becomes <code>opencode serve --port &lt;free-port&gt;</code> (so we know the port up-front). Capture <code>port</code>, <code>sessionID</code>, and <code>model</code> into <code>handle.data</code> at session creation. No tmux involvement, no inbox watcher, no plugin-side code inside the agent process. End of story.</p>
+<hr>
+<h2>Bug filed during this work</h2>
+<p><a href="https://github.com/anomalyco/opencode/issues/26671">anomalyco/opencode#26671</a> — <em>"TUI does not live-render messages when prompt is POSTed externally via /session/{id}/prompt_async"</em></p>
+<p>OpenCode's TUI doesn't live-render messages whose prompt originated from an external HTTP POST — they appear only after <code>Ctrl+C</code> + resume. Web UI renders correctly. Server persists correctly. Cosmetic for AO (the human watches via the dashboard, not the agent's TUI), but worth fixing upstream.</p>
+<hr>
+<h2>Recommended messaging architecture for AO</h2>
+<h3>Per-agent transport, single inbox record</h3>
+<pre><code>orchestrator
+   │
+   ├─ append { sessionId, kind, payload, ts } to {workspace}/.ao/inbox.jsonl   (durable record)
+   │
+   └─ runtime/agent plugin's sendMessage()
+        │
+        ├─ Claude Code   → ensure inbox-watcher running in agent's bash; agent picks up via wake-up
+        ├─ Copilot CLI   → same as Claude Code
+        ├─ OpenCode      → fetch POST /session/{id}/prompt_async to the agent's local server
+        ├─ Codex          → existing send-keys path (until upstream fixes #22003)
+        └─ Cursor         → existing send-keys path (no wake-up channel exists, verified empirically)
+</code></pre>
+<p><strong><code>inbox.jsonl</code> becomes the durable log</strong> — replay, audit, debugging, idempotency. Each entry has a monotonic id; the agent persists the last-consumed id in its workspace.</p>
+<p><strong>The transport is per-agent.</strong> One mechanism per plugin, dispatched from <code>sendMessage</code>. The orchestrator doesn't care which.</p>
+<h3>What this buys us</h3>
+<ul>
+<li><strong>Atomic structured records</strong> — no half-pasted messages, no terminal-byte parsing.</li>
+<li><strong>Real idempotency</strong> — last-consumed id beats the current dispatch-hash heuristic.</li>
+<li><strong>Cross-runtime by construction</strong> — tmux, process, Windows pty-host all work the same.</li>
+<li><strong>Replayable</strong> — agent restart re-reads inbox from last id; no lost messages.</li>
+<li><strong>No timing races</strong> — no 300 ms sleeps, no pasted-text-vs-Enter ordering.</li>
+</ul>
+<h3>Migration path (rough sketch)</h3>
+<ol>
+<li>Add inbox-write helper to core (<code>appendInboxEntry(workspacePath, entry)</code>).</li>
+<li>Update each agent plugin's <code>sendMessage</code> to use its native transport.</li>
+<li>For Claude Code / Copilot — install the inbox watcher in <code>setupWorkspaceHooks</code> (system prompt instructs the agent to keep one running).</li>
+<li>For OpenCode — capture <code>port</code> / <code>sessionID</code> / <code>model</code> in <code>handle.data</code>; <code>sendMessage</code> POSTs to the local server.</li>
+<li>For Codex — keep the existing send-keys path; revisit when <a href="https://github.com/openai/codex/issues/22003">#22003</a> lands.</li>
+<li>Replace <code>sendWithConfirmation</code>'s "best-effort + dispatch-hash" with explicit ack via the inbox last-consumed id.</li>
+</ol>
+<p>This is incremental. Each agent plugin migrates independently. The orchestrator-side append-to-inbox can ship first behind a feature flag.</p>
+<hr>
+<h2>References</h2>
+<h3>AO codebase</h3>
+<ul>
+<li><code>packages/core/src/types.ts:399</code> — <code>Runtime.sendMessage</code></li>
+<li><code>packages/plugins/runtime-tmux/src/index.ts:132-169</code> — current tmux send-keys impl</li>
+<li><code>packages/plugins/runtime-process/src/index.ts:369-413</code> — current process stdin impl</li>
+<li><code>packages/core/src/session-manager.ts:2525-2565</code> — <code>sendWithConfirmation</code> and best-effort delivery comment</li>
+</ul>
+<h3>Claude Code</h3>
+<ul>
+<li>Built-in <code>Bash(run_in_background: true)</code> + <code>&lt;task-notification&gt;</code> injection. No public docs link; verified empirically.</li>
+</ul>
+<h3>OpenCode</h3>
+<ul>
+<li><a href="https://opencode.ai/docs/server/">Server docs</a></li>
+<li><a href="https://opencode.ai/docs/sdk/">SDK docs</a></li>
+<li><a href="https://deepwiki.com/sst/opencode/7.2-authentication-system">REST API reference (DeepWiki)</a></li>
+<li>Open feature request for native bg-bash: <a href="https://github.com/anomalyco/opencode/issues/1970">anomalyco/opencode#1970</a> (working branch by abrar360 awaits maintainer review)</li>
+</ul>
+<h3>Codex CLI</h3>
+<ul>
+<li><a href="https://github.com/openai/codex/issues/14314">openai/codex#14314</a> — stuck waiting for bg terminal</li>
+<li><a href="https://github.com/openai/codex/issues/3968">openai/codex#3968</a> — proper bg session support</li>
+<li><a href="https://github.com/openai/codex/issues/22003">openai/codex#22003</a> — Harshit's filed report with AO use case</li>
+</ul>
+<h3>GitHub Copilot CLI</h3>
+<ul>
+<li><a href="https://github.com/github/copilot-cli/issues/2682">github/copilot-cli#2682</a> — surface long-running shell commands</li>
+<li><a href="https://github.com/github/copilot-cli/issues/2650">github/copilot-cli#2650</a> — notify on input</li>
+</ul>
+<h3>Cursor</h3>
+<ul>
+<li><a href="https://forum.cursor.com/t/agent-doesnt-wait-for-terminal-command-to-finish/122392">Cursor forum</a> — agent doesn't wait for terminal command</li>
+</ul>
+<h3>Filed by AO during this work</h3>
+<ul>
+<li><a href="https://github.com/anomalyco/opencode/issues/26671">anomalyco/opencode#26671</a> — OpenCode TUI live-render bug (reproducer + steps included)</li>
+</ul>
+
+</body>
+</html>
