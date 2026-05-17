@@ -1,0 +1,918 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Artifacts v1 — AO shipping notice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0c;
+    --bg-warm: #0c0b09;
+    --surface: #131319;
+    --surface-2: #1a1a22;
+    --border: rgba(255, 255, 255, 0.07);
+    --border-strong: rgba(255, 255, 255, 0.14);
+    --text: #ece8d8;          /* warm cream */
+    --text-muted: #807c74;
+    --text-faint: #4a4843;
+    --accent: #c1ff66;        /* highlighter lime */
+    --accent-warm: #ff9e5a;   /* construction amber */
+    --shadow: 0 24px 60px -20px rgba(0,0,0,0.7);
+    --serif: "Instrument Serif", "Times New Roman", Georgia, serif;
+    --sans: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+    --mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-weight: 300;
+    font-size: 17px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+
+  /* Subtle grain texture overlay */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 100;
+    background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='1.6' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.04 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    mix-blend-mode: overlay;
+    opacity: 0.5;
+  }
+
+  ::selection { background: var(--accent); color: #0a0a0c; }
+
+  a { color: var(--text); text-decoration: none; border-bottom: 1px solid var(--accent); padding-bottom: 1px; transition: color .15s, background .15s; }
+  a:hover { background: var(--accent); color: #0a0a0c; }
+
+  /* ---------- Top wire-service status bar ---------- */
+  .wire {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    background: rgba(10, 10, 12, 0.7);
+    border-bottom: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    padding: 10px 32px;
+    color: var(--text-muted);
+    display: flex;
+    gap: 18px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .wire .live { color: var(--accent); }
+  .wire .live::before {
+    content: "";
+    display: inline-block;
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    margin-right: 8px;
+    vertical-align: 1px;
+    animation: pulse 1.8s ease-in-out infinite;
+  }
+  @keyframes pulse { 50% { opacity: 0.25; } }
+  .wire .dot { color: var(--text-faint); }
+
+  /* ---------- Layout ---------- */
+  .page {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 48px;
+  }
+  @media (max-width: 720px) {
+    .page { padding: 0 24px; }
+    .wire { padding: 10px 18px; gap: 12px; font-size: 10px; }
+  }
+
+  /* ---------- Hero ---------- */
+  .hero {
+    padding: 120px 0 80px;
+    position: relative;
+  }
+  .hero .meta {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--text-muted);
+    margin-bottom: 40px;
+    display: flex;
+    gap: 18px;
+    align-items: center;
+  }
+  .hero .meta .tag {
+    background: var(--accent);
+    color: #0a0a0c;
+    padding: 3px 10px 4px;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+  }
+  .hero h1 {
+    font-family: var(--serif);
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(96px, 18vw, 280px);
+    line-height: 0.85;
+    letter-spacing: -0.04em;
+    margin: 0;
+    padding: 0;
+    color: var(--text);
+    transform: translateX(-0.04em);
+  }
+  .hero h1 .dot { color: var(--accent); }
+  .hero .sub {
+    margin-top: 32px;
+    max-width: 640px;
+    font-size: 22px;
+    line-height: 1.45;
+    font-weight: 300;
+    color: var(--text);
+  }
+  .hero .sub em {
+    font-family: var(--serif);
+    font-style: italic;
+    color: var(--accent);
+    font-size: 1.05em;
+  }
+
+  /* ---------- Stats strip ---------- */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    margin: 80px 0 0;
+  }
+  .stat {
+    padding: 28px 22px;
+    border-right: 1px solid var(--border);
+  }
+  .stat:last-child { border-right: none; }
+  .stat .num {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 56px;
+    line-height: 1;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .stat .num.lime { color: var(--accent); }
+  .stat .label {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--text-muted);
+  }
+  @media (max-width: 720px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .stat:nth-child(2) { border-right: none; }
+    .stat:nth-child(1), .stat:nth-child(2) { border-bottom: 1px solid var(--border); }
+  }
+
+  /* ---------- Section ---------- */
+  section { padding: 120px 0; position: relative; }
+  .section-marker {
+    display: flex;
+    align-items: baseline;
+    gap: 18px;
+    margin-bottom: 48px;
+  }
+  .section-marker .ord {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: var(--text-faint);
+    text-transform: uppercase;
+    border-top: 1px solid var(--border-strong);
+    padding-top: 8px;
+    min-width: 90px;
+  }
+  .section-marker .label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    border-top: 1px solid var(--border);
+    padding-top: 8px;
+    flex: 1;
+  }
+  h2 {
+    font-family: var(--serif);
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(48px, 7vw, 88px);
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+    margin: 0 0 56px;
+    max-width: 18ch;
+  }
+  h2 .lime { color: var(--accent); font-style: italic; }
+  h3 {
+    font-family: var(--serif);
+    font-style: italic;
+    font-weight: 400;
+    font-size: 32px;
+    line-height: 1.1;
+    margin: 0 0 12px;
+  }
+  p { max-width: 64ch; margin: 0 0 22px; }
+  p.lede { font-size: 20px; line-height: 1.55; max-width: 56ch; }
+
+  /* ---------- Body lockup with marginalia ---------- */
+  .lockup {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 60px;
+    align-items: start;
+  }
+  .lockup .aside {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    line-height: 1.65;
+    border-left: 1px solid var(--accent);
+    padding-left: 18px;
+  }
+  .lockup .aside strong { color: var(--text); font-weight: 500; display: block; margin-bottom: 6px; font-size: 12px; }
+  @media (max-width: 860px) {
+    .lockup { grid-template-columns: 1fr; gap: 24px; }
+  }
+
+  /* ---------- Screenshot frames ---------- */
+  .frame {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .frame img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .frame .frame-bar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent) 50%, transparent);
+    opacity: 0.6;
+  }
+  .frame-caption {
+    margin-top: 14px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+  .frame-caption .pin {
+    color: var(--accent);
+    font-weight: 500;
+    margin-right: 8px;
+  }
+
+  .hero-shot {
+    margin: 80px -40px 0;
+  }
+  @media (max-width: 720px) { .hero-shot { margin: 60px 0 0; } }
+
+  /* ---------- Three-card grid ---------- */
+  .triptych {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 36px;
+    margin-top: 24px;
+  }
+  .triptych article { display: flex; flex-direction: column; }
+  .triptych .badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+  }
+  .triptych .badge .num { color: var(--accent); font-weight: 500; margin-right: 8px; }
+  .triptych h3 { font-size: 28px; margin-bottom: 8px; }
+  .triptych p { font-size: 15px; line-height: 1.6; margin-bottom: 20px; color: var(--text-muted); }
+  .triptych p strong { color: var(--text); font-weight: 500; }
+  .triptych .frame { margin-top: auto; }
+  @media (max-width: 860px) {
+    .triptych { grid-template-columns: 1fr; gap: 64px; }
+  }
+
+  /* ---------- Two-up comparison ---------- */
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr;
+    gap: 48px;
+    align-items: start;
+    margin-top: 32px;
+  }
+  @media (max-width: 860px) { .compare { grid-template-columns: 1fr; } }
+
+  /* ---------- Code block ---------- */
+  .code {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 28px 32px;
+    font-family: var(--mono);
+    font-size: 14px;
+    line-height: 1.85;
+    color: var(--text);
+    margin: 28px 0;
+    position: relative;
+    overflow-x: auto;
+    white-space: pre;
+  }
+  .code .prompt { color: var(--accent); user-select: none; margin-right: 8px; }
+  .code .comment { color: var(--text-faint); }
+  .code .flag { color: var(--accent-warm); }
+  .code .str { color: var(--text); }
+  .code .label-tag {
+    position: absolute;
+    top: -1px; right: -1px;
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    color: #0a0a0c;
+    background: var(--accent);
+    padding: 4px 10px;
+    text-transform: uppercase;
+  }
+
+  /* ---------- ASCII pipeline diagram ---------- */
+  .pipeline {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 36px 32px;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--text-muted);
+    white-space: pre;
+    overflow-x: auto;
+    margin: 32px 0;
+  }
+  .pipeline .hl { color: var(--accent); }
+  .pipeline .em { color: var(--text); }
+
+  /* ---------- Bullet list (constraints) ---------- */
+  .constraints {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0;
+    border-top: 1px solid var(--border);
+  }
+  .constraints li {
+    border-bottom: 1px solid var(--border);
+    padding: 22px 24px 22px 0;
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 18px;
+    align-items: baseline;
+  }
+  .constraints li:nth-child(odd) { padding-right: 32px; border-right: 1px solid var(--border); }
+  .constraints li:nth-child(even) { padding-left: 32px; }
+  .constraints .key {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .constraints .val { font-size: 15px; color: var(--text); line-height: 1.5; }
+  .constraints .val em {
+    font-family: var(--mono);
+    font-style: normal;
+    color: var(--text-muted);
+    font-size: 0.92em;
+  }
+  @media (max-width: 720px) {
+    .constraints { grid-template-columns: 1fr; }
+    .constraints li:nth-child(odd) { padding-right: 0; border-right: none; }
+    .constraints li:nth-child(even) { padding-left: 0; }
+  }
+
+  /* ---------- Pull-quote ---------- */
+  .pull {
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 64px 0;
+    margin: 80px 0;
+    text-align: center;
+  }
+  .pull q {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: clamp(36px, 5vw, 56px);
+    line-height: 1.1;
+    quotes: "“" "”";
+    color: var(--text);
+    display: block;
+    margin-bottom: 24px;
+  }
+  .pull q::before, .pull q::after { color: var(--accent); }
+  .pull cite {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-style: normal;
+  }
+
+  /* ---------- Outro / footer ---------- */
+  .outro {
+    padding: 120px 0 80px;
+    border-top: 1px solid var(--border);
+    margin-top: 80px;
+  }
+  .outro h2 { margin-bottom: 24px; }
+  .outro p { font-size: 18px; }
+  .outro .links {
+    margin-top: 48px;
+    display: flex;
+    gap: 36px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    flex-wrap: wrap;
+  }
+  .outro .signoff {
+    margin-top: 64px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: var(--text-faint);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .outro .signoff .cursor {
+    display: inline-block;
+    width: 8px;
+    height: 14px;
+    background: var(--accent);
+    animation: blink 1.1s steps(2) infinite;
+    vertical-align: -2px;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* ---------- Inline mono ---------- */
+  code, .mono {
+    font-family: var(--mono);
+    font-size: 0.88em;
+    background: var(--surface);
+    padding: 1px 7px 2px;
+    border-radius: 2px;
+    color: var(--accent);
+  }
+
+  /* ---------- Section anchor underline ---------- */
+  h2 .underline {
+    background-image: linear-gradient(transparent 75%, var(--accent) 75%);
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    padding: 0 0.05em;
+  }
+
+  /* ---------- Reveal on scroll ---------- */
+  .reveal { opacity: 0; transform: translateY(20px); transition: opacity .8s ease, transform .8s cubic-bezier(.2,.7,.2,1); }
+  .reveal.shown { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- ============ WIRE BAR ============ -->
+<div class="wire">
+  <span class="live">LIVE</span>
+  <span>ao / artifacts / v1</span>
+  <span class="dot">·</span>
+  <span>branch: harshit/artifacts/v1</span>
+  <span class="dot">·</span>
+  <span>pr #1847 (draft)</span>
+  <span class="dot">·</span>
+  <span>17.05.26</span>
+</div>
+
+<!-- ============ HERO ============ -->
+<header class="page hero">
+  <div class="meta">
+    <span class="tag">SHIPPING NOTICE</span>
+    <span>v1.0</span>
+    <span class="dot">·</span>
+    <span>harshit</span>
+  </div>
+  <h1>Artifacts<span class="dot">.</span></h1>
+  <p class="sub">
+    A right-rail that catches everything an agent <em>wants you to see</em> —
+    its plan, its current status, build summaries, link trackers, anything it
+    pipes through <code>ao artifact publish</code> — and turns them into
+    durable, addressable cards next to the terminal.
+  </p>
+
+  <div class="stats">
+    <div class="stat"><div class="num lime">42</div><div class="label">Unit tests added</div></div>
+    <div class="stat"><div class="num">4 427</div><div class="label">Lines of code, +</div></div>
+    <div class="stat"><div class="num">49</div><div class="label">Files touched</div></div>
+    <div class="stat"><div class="num">2</div><div class="label">Renderer types</div></div>
+  </div>
+
+  <div class="hero-shot">
+    <div class="frame">
+      <div class="frame-bar"></div>
+      <img src="screenshots/01-hero-full.png" alt="The artifact rail rendered next to the terminal in the AO dashboard.">
+    </div>
+    <p class="frame-caption">
+      <span class="pin">▶</span>
+      Session <code>ao-139</code>: terminal at left, artifact rail at right.
+      Four lived-in cards — auto-rendered agent status, the agent's own checklist,
+      an HTML stats card, and a markdown card naming the rename.
+    </p>
+  </div>
+</header>
+
+<!-- ============ §01 PREMISE ============ -->
+<section class="page">
+  <div class="section-marker">
+    <span class="ord">§ 01</span>
+    <span class="label">Premise / why this exists</span>
+  </div>
+  <h2>The terminal is a <span class="lime"><span class="underline">river</span></span>. The rail is a <span class="lime"><span class="underline">shelf</span></span>.</h2>
+
+  <div class="lockup">
+    <div class="aside">
+      <strong>Origin</strong>
+      Started as a riff on Ashish's PR #1653 review notes. Took Prateek's
+      <em>"keep it light + extensible"</em> guidance as a hard constraint —
+      shipped only two card types this round.
+    </div>
+    <div>
+      <p class="lede">
+        Agents emit a constant stream of structured signals: plans, status reports,
+        diff summaries, link trackers, dry-run output. Until now those signals
+        only existed as ephemeral terminal scrollback — fine in the moment,
+        useless ten lines later.
+      </p>
+      <p>
+        The artifact rail catches them. Each signal becomes a card with an id, a
+        title, a source, a timestamp, and a renderer. The card lives in
+        <code>~/.agent-orchestrator/projects/&lt;id&gt;/artifacts/&lt;session&gt;/</code>
+        — workspace-adjacent, never inside the worktree, never in a git operation.
+      </p>
+      <p>
+        Two renderers in v1: <strong>markdown</strong> (sanitized, Marked-rendered)
+        and <strong>html</strong> (sandboxed iframe, null-origin, no
+        <code>allow-same-origin</code>). One synth-core card writes itself:
+        whenever you run <code>ao acknowledge</code> or <code>ao report</code>,
+        the latest state plus the last twenty entries materialize as a
+        markdown artifact called <code>core-agent-status</code>.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ §02 THREE CARD TYPES ============ -->
+<section class="page">
+  <div class="section-marker">
+    <span class="ord">§ 02</span>
+    <span class="label">Three card types, one rail</span>
+  </div>
+  <h2>Two renderers, one <span class="lime"><span class="underline">synthesizer</span></span>.</h2>
+  <p class="lede" style="margin-bottom: 60px;">
+    Agents publish via the CLI. AO synthesizes one card on its own. Both flow
+    through the same ingest pipeline, validate against the same Zod schema,
+    and land in the same canonical store.
+  </p>
+
+  <div class="triptych">
+
+    <article>
+      <div class="badge"><span class="num">A</span> Markdown · agent-published</div>
+      <h3>The agent's own checklist.</h3>
+      <p>
+        Agents pipe markdown through <code>ao artifact publish --type markdown</code>.
+        AO sanitizes it (no raw HTML, no scripts, no images that hit the network),
+        Marked renders it, and the rail shows checkboxes as real checkboxes.
+        <strong>Capped at 64k chars.</strong>
+      </p>
+      <div class="frame">
+        <div class="frame-bar"></div>
+        <img src="screenshots/03-card-markdown.png" alt="Agent plan markdown card with checkbox list.">
+      </div>
+      <p class="frame-caption">
+        <span class="pin">A</span>
+        Source pill reads <code>AGENT</code>. Reorder ▲▼ and collapse ▾ are
+        per-card, persisted to localStorage by id.
+      </p>
+    </article>
+
+    <article>
+      <div class="badge"><span class="num">B</span> HTML · agent-published</div>
+      <h3>Full layout, sandboxed.</h3>
+      <p>
+        For richer cards — stat grids, side-by-side diffs, branded summaries —
+        agents publish HTML. AO embeds it in an iframe with
+        <strong>sandbox="allow-scripts"</strong> only: null origin, no parent access,
+        no network, no storage. <strong>Capped at 200k chars.</strong>
+      </p>
+      <div class="frame">
+        <div class="frame-bar"></div>
+        <img src="screenshots/04-card-html.png" alt="HTML stats card rendering in a sandboxed iframe.">
+      </div>
+      <p class="frame-caption">
+        <span class="pin">B</span>
+        Iframe declares <code>color-scheme: dark</code> so the chrome doesn't
+        flash white. Height is postMessage-driven from inside.
+      </p>
+    </article>
+
+    <article>
+      <div class="badge"><span class="num">C</span> Markdown · synth-core</div>
+      <h3>The card that writes itself.</h3>
+      <p>
+        Every time you run <code>ao acknowledge</code> or <code>ao report &lt;state&gt;</code>,
+        AO reads the audit trail, renders the latest state plus the last twenty
+        entries, and writes it as the reserved id <code>core-agent-status</code>.
+        Agents can't overwrite it — the <code>core-*</code> prefix is rejected at ingest.
+      </p>
+      <div class="frame">
+        <div class="frame-bar"></div>
+        <img src="screenshots/05-card-synth.png" alt="Agent status card auto-rendered from ao report.">
+      </div>
+      <p class="frame-caption">
+        <span class="pin">C</span>
+        Source pill reads <code>SYNTH-CORE</code>. Best-effort writer — if the
+        synthesizer throws, <code>ao report</code> still succeeds.
+      </p>
+    </article>
+
+  </div>
+</section>
+
+<!-- ============ §03 INTERACTIONS ============ -->
+<section class="page">
+  <div class="section-marker">
+    <span class="ord">§ 03</span>
+    <span class="label">Interactions / get out of the way</span>
+  </div>
+  <h2>You drive the <span class="lime"><span class="underline">shelf</span></span>, not us.</h2>
+
+  <div class="lockup">
+    <div class="aside">
+      <strong>State surface</strong>
+      <code>ao-artifact-rail-collapsed</code> · global<br>
+      <code>ao-artifact-collapsed</code> · global map by artifact id<br>
+      <code>ao-artifact-order:&lt;session&gt;</code> · per session
+    </div>
+    <div>
+      <p class="lede">
+        Three controls, all persistent across reloads, all localStorage. No
+        server-side state, no preferences API, no migration. The rail's job is
+        to be predictable when you come back to it tomorrow.
+      </p>
+      <p>
+        <strong>Whole-rail collapse</strong> — when the terminal is the focus and
+        the cards are noise, click the <code>›</code> in the rail header. A
+        24px strip stays at the right edge so the rail is always one click away.
+        Drag-resize the rail width with the splitter — that persists too.
+      </p>
+      <p>
+        <strong>Per-card collapse</strong> — long markdown gets noisy. The
+        <code>▾</code> button on any card hides the body while keeping the header
+        + source + reorder visible. Per-artifact state, so collapsing the agent
+        plan once stays collapsed across the session.
+      </p>
+      <p>
+        <strong>Reorder</strong> — <code>▲</code> and <code>▼</code> move a card
+        one slot up or down. The order is per-session and merges with the
+        default <code>updatedAt</code> sort: ids you've placed come first in your
+        order, everything else flows underneath, newest first. Stale ids (cards
+        that got evicted) silently drop out.
+      </p>
+    </div>
+  </div>
+
+  <div class="compare">
+    <div>
+      <div class="frame">
+        <div class="frame-bar"></div>
+        <img src="screenshots/06-rail-collapsed.png" alt="The dashboard with the artifact rail collapsed to a thin strip.">
+      </div>
+      <p class="frame-caption">
+        <span class="pin">▶</span>
+        Whole-rail collapsed. Terminal claims the full width. A 24px strip
+        with a <code>‹</code> handle remains at the right edge.
+      </p>
+    </div>
+    <div>
+      <div class="frame">
+        <div class="frame-bar"></div>
+        <img src="screenshots/07-card-collapsed.png" alt="The rail with the agent-plan card collapsed to just its header.">
+      </div>
+      <p class="frame-caption">
+        <span class="pin">▶</span>
+        Agent plan card collapsed mid-rail. Header, source pill, and the
+        ▲▼▸ controls remain; body hides. Other cards untouched.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PULL QUOTE ============ -->
+<div class="page">
+  <div class="pull">
+    <q>Keep it light. Extensible later. Two renderers, no synthesizers we'll regret.</q>
+    <cite>— design constraint, paraphrased from Prateek's review of #1653</cite>
+  </div>
+</div>
+
+<!-- ============ §04 HOW AGENTS PUBLISH ============ -->
+<section class="page">
+  <div class="section-marker">
+    <span class="ord">§ 04</span>
+    <span class="label">How agents publish</span>
+  </div>
+  <h2>One CLI verb. One pipeline. <span class="lime"><span class="underline">No surprises.</span></span></h2>
+
+  <p class="lede">
+    Agents publish artifacts the same way they do everything else in AO — through
+    the <code>ao</code> CLI, run from inside the workspace they're attached to.
+    The session id is inferred from <code>$AO_SESSION_ID</code>.
+  </p>
+
+  <div class="code"><span class="label-tag">SHELL</span><span class="comment"># A markdown card from a file</span>
+<span class="prompt">$</span> ao artifact publish <span class="flag">--id</span> agent-plan <span class="flag">--title</span> <span class="str">"Agent plan"</span> <span class="flag">--type</span> markdown <span class="flag">&lt;</span> plan.md
+
+<span class="comment"># An HTML card from stdin</span>
+<span class="prompt">$</span> cat summary.html <span class="flag">|</span> ao artifact publish <span class="flag">--id</span> build-summary <span class="flag">--type</span> html
+
+<span class="comment"># Inline updates use the same command — id is stable, body is replaced.</span></div>
+
+  <p>
+    Behind the verb is a staged-file pipeline. The CLI writes a JSON blob to a
+    <code>.staging/</code> directory on the canonical artifact path. A chokidar
+    watcher running inside the dashboard server picks it up, validates against the
+    Zod schema, stamps server-owned metadata (<code>createdAt</code>,
+    <code>updatedAt</code>, <code>source</code>), and atomically renames the
+    file into place. The Mux WebSocket then broadcasts the new artifact to every
+    open dashboard subscribed to that session.
+  </p>
+
+  <div class="pipeline">
+   <span class="em">ao artifact publish</span>
+        │  <span class="hl">stage</span>
+        ▼
+  .staging/&lt;random&gt;.json
+        │  <span class="hl">watcher detects</span>
+        ▼
+  parse + Zod validate ──→ <span class="hl">reject</span> (write artifact-error, log, drop)
+        │
+        ▼  stamp server metadata (createdAt, updatedAt, source)
+        │
+        ▼  size cap (256 KB) · count cap (32/session, evict oldest)
+        │
+        ▼  reserved-prefix check (<span class="hl">core-*</span> blocked from agents)
+        │
+        ▼  atomic rename → canonical: &lt;id&gt;.json
+        │
+        ▼  <span class="em">Mux broadcast</span> { type: "artifact-update", sessionId, artifact }
+        │
+        ▼
+  useArtifacts() hook in the React rail → re-render
+  </div>
+
+  <p>
+    The synth-core card takes a side door: <code>writeAgentStatusArtifact()</code>
+    writes directly to the canonical store (no staging round-trip) after
+    <code>applyAgentReport</code>. The watcher still notices the canonical write
+    and broadcasts it — so the rail updates the same way regardless of source.
+  </p>
+</section>
+
+<!-- ============ §05 CONSTRAINTS / NON-GOALS ============ -->
+<section class="page">
+  <div class="section-marker">
+    <span class="ord">§ 05</span>
+    <span class="label">Constraints / non-goals</span>
+  </div>
+  <h2>What this <span class="lime"><span class="underline">isn't</span></span>.</h2>
+
+  <p class="lede">
+    Light v1 means we drew sharp lines around scope and held them. The list
+    below is the contract for what comes later.
+  </p>
+
+  <ul class="constraints">
+    <li>
+      <span class="key">scope</span>
+      <span class="val">Two renderers only — markdown and html.<br><em>No prompt card. No diff renderer. No canvas synthesizer.</em></span>
+    </li>
+    <li>
+      <span class="key">storage</span>
+      <span class="val">Workspace-adjacent, never inside the worktree.<br><em>~/.agent-orchestrator/projects/&lt;id&gt;/artifacts/&lt;session&gt;/</em></span>
+    </li>
+    <li>
+      <span class="key">caps</span>
+      <span class="val">256 KB per artifact · 64k chars markdown · 200k chars html · 32 cards per session (LRU on updatedAt).</span>
+    </li>
+    <li>
+      <span class="key">reserved</span>
+      <span class="val"><em>core-*</em> ids are rejected at ingest. Synth-core writes there directly; agents cannot.</span>
+    </li>
+    <li>
+      <span class="key">sandbox</span>
+      <span class="val">HTML cards: <em>sandbox="allow-scripts"</em>, null origin, no <em>allow-same-origin</em>, no top-frame access.</span>
+    </li>
+    <li>
+      <span class="key">no-deps</span>
+      <span class="val">Zero new UI libraries (CLAUDE.md C-01). Marked + dompurify already in the tree; everything else is hand-rolled CSS.</span>
+    </li>
+    <li>
+      <span class="key">no-server-state</span>
+      <span class="val">Collapse, reorder, rail width — all localStorage. No prefs API, no migration story to maintain.</span>
+    </li>
+    <li>
+      <span class="key">best-effort</span>
+      <span class="val">Synth-core writes are wrapped: if the synthesizer throws, <em>ao report</em> still succeeds. Never on the critical path.</span>
+    </li>
+  </ul>
+</section>
+
+<!-- ============ §06 SHIPPING / OUTRO ============ -->
+<footer class="page outro">
+  <div class="section-marker">
+    <span class="ord">§ 06</span>
+    <span class="label">Shipping</span>
+  </div>
+  <h2>Ready for a <span class="lime"><span class="underline">look</span></span>.</h2>
+  <p>
+    PR <a href="https://github.com/ComposioHQ/agent-orchestrator/pull/1847">#1847</a>
+    is open against <code>main</code> on <code>harshit/artifacts/v1</code>.
+    Forty-two unit tests, +4 427 / −42 across 49 files, single squashed feat
+    commit on top of a few iterative fix-ups. Latest commit
+    <code>fa2f6dff</code> adds test coverage for the collapse/reorder hooks,
+    card controls, and the synth-core writer.
+  </p>
+  <p>
+    The diff is paperwork; the rail is the artifact. Open the PR, pull the
+    branch, run <code>pnpm dev</code>, run any agent in any session, and the
+    rail will fill itself.
+  </p>
+
+  <div class="links">
+    <a href="https://github.com/ComposioHQ/agent-orchestrator/pull/1847">→ Read PR #1847</a>
+    <a href="https://github.com/ComposioHQ/agent-orchestrator/tree/harshit/artifacts/v1">→ Branch tree</a>
+    <a href="https://github.com/ComposioHQ/agent-orchestrator/pull/1653">→ Ashish's original #1653</a>
+  </div>
+
+  <div class="signoff">
+    <span class="cursor"></span>
+    <span>END OF NOTICE · ao/artifacts/v1 · 17.05.26 · harshit@bom</span>
+  </div>
+</footer>
+
+<script>
+  // Reveal-on-scroll: subtle fade-in for sections.
+  const observer = new IntersectionObserver((entries) => {
+    for (const e of entries) {
+      if (e.isIntersecting) {
+        e.target.classList.add("shown");
+        observer.unobserve(e.target);
+      }
+    }
+  }, { threshold: 0.08 });
+  for (const el of document.querySelectorAll("section, .hero, .pull, .outro")) {
+    el.classList.add("reveal");
+    observer.observe(el);
+  }
+</script>
+
+</body>
+</html>
